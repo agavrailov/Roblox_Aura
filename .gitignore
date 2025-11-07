@@ -1,0 +1,14 @@
+# Binaries
+bin/
+
+# Aftman lock file
+aftman.lock
+
+# User-specific files
+.DS_Store
+*.sublime-workspace
+
+# Gemini CLI files
+New Text Document.txt
+GEMINI.bg.md
+Game_Design_Aura_Collector.md

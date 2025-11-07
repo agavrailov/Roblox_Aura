@@ -1,0 +1,2 @@
+bin\rojo.exe serve
+
