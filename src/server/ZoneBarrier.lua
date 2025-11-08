@@ -26,7 +26,7 @@ local function setupCollisionGroups()
 			if groupInfo.name == groupName then
 				groupExists = true
 				break
-			}
+			end -- Corrected from '}'
 		end
 		if not groupExists then
 			PhysicsService:RegisterCollisionGroup(groupName) -- Updated API
