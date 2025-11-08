@@ -7,6 +7,10 @@
       "ZoneManager": {
         "$className": "ModuleScript",
         "$path": "src/server/ZoneManager.server.lua"
+      },
+      "ZoneBarrier": {
+        "$className": "ModuleScript",
+        "$path": "src/server/ZoneBarrier.server.lua"
       }
     },
     "ReplicatedStorage": {
