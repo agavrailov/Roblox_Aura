@@ -16,6 +16,13 @@ ZoneConfig.Zones = {
 			Vector3.new(10, 3, -10),
 			Vector3.new(-10, 3, -10),
 		},
+		-- Physical properties for map generation
+		Size = Vector3.new(100, 1, 100),
+		Position = Vector3.new(0, 0, 0),
+		BarrierPosition = Vector3.new(25, 5, 0), -- Example position for barrier to Forest Zone
+		BarrierSize = Vector3.new(5, 10, 1),
+		FenceHeight = 15,
+		FenceThickness = 1,
 	},
 
 	["Forest Zone"] = {
@@ -29,6 +36,13 @@ ZoneConfig.Zones = {
 			Vector3.new(50, 3, -10),
 			Vector3.new(60, 3, -10),
 		},
+		-- Physical properties for map generation
+		Size = Vector3.new(100, 1, 100),
+		Position = Vector3.new(50, 0, 0),
+		BarrierPosition = Vector3.new(75, 5, 0), -- Example position for barrier to next zone (if any)
+		BarrierSize = Vector3.new(5, 10, 1),
+		FenceHeight = 15,
+		FenceThickness = 1,
 	},
 
 	-- Add more zones as needed

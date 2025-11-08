@@ -7,11 +7,15 @@ local Players = game:GetService("Players")
 local PlayerData = require(ReplicatedStorage.PlayerData)
 local AuraManager = require(game.ServerScriptService.AuraManager) -- Require AuraManager explicitly
 local ZoneBarrier = require(game.ServerScriptService.ZoneBarrier) -- New: Require ZoneBarrier
+local MapGenerator = require(game.ServerScriptService.MapGenerator) -- New: Require MapGenerator
 local UpdateLuminEvent = ReplicatedStorage:WaitForChild("UpdateLumin")
 local EquipAuraEvent = ReplicatedStorage:WaitForChild("EquipAura")
 local GetEquippedAuraFunction = ReplicatedStorage:WaitForChild("GetEquippedAura") -- New RemoteFunction
 
 print("Aura Collector Simulator Server Script Loaded")
+
+-- Generate the map dynamically
+MapGenerator.generateMap()
 
 -- Handle client requests for equipped aura
 GetEquippedAuraFunction.OnServerInvoke = function(player: Player): string?
@@ -31,13 +35,4 @@ Players.PlayerAdded:Connect(function(player)
 	local equippedAura = PlayerData.getEquippedAura(player)
 	EquipAuraEvent:FireClient(player, equippedAura)
 end)
-
--- Initialize Zone Barriers
-local forestBarrierPart = workspace:FindFirstChild("ForestBarrier")
-if forestBarrierPart then
-	ZoneBarrier.new(forestBarrierPart, "Forest Zone")
-	print("Forest Zone barrier initialized.")
-else
-	warn("ForestBarrier part not found in Workspace. Zone access not fully functional.")
-end
 
