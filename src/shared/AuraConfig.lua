@@ -29,7 +29,7 @@ AuraConfig.Auras = {
 	-- Blue Aura
 	["Blue Aura"] = {
 		Name = "Blue Aura",
-		Cost = 1, -- Temporarily reduced for testing
+		Cost = 2000,
 		LuminMultiplier = 1.5, -- 50% more Lumin
 		ParticleEffect = "rbxassetid://0", -- Placeholder
 		Description = "A calming blue radiance.",
