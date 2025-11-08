@@ -6,7 +6,10 @@
       "$path": "src/server"
     },
     "ReplicatedStorage": {
-      "$path": "src/shared"
+      "$path": "src/shared",
+      "UpdateLumin": {
+        "$className": "RemoteEvent"
+      }
     },
     "StarterPlayer": {
       "$className": "StarterPlayer",

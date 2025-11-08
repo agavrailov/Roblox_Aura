@@ -7,6 +7,7 @@ local Players = game:GetService("Players")
 
 local Orb = require(ReplicatedStorage.Orb)
 local PlayerData = require(ReplicatedStorage.PlayerData)
+local UpdateLuminEvent = ReplicatedStorage:WaitForChild("UpdateLumin")
 
 print("OrbManager Server Script Loaded")
 
@@ -36,7 +37,9 @@ local function spawnOrb(position: Vector3, luminAmount: number)
 		if luminAmount then
 			-- If collection was successful, add lumin to the player's data
 			PlayerData.addLumin(player, luminAmount)
-			print(player.Name .. " now has " .. PlayerData.get(player, "Lumin") .. " Lumin.")
+			local newLumin = PlayerData.get(player, "Lumin")
+			print(player.Name .. " now has " .. newLumin .. " Lumin.")
+			UpdateLuminEvent:FireClient(player, newLumin) -- Update client UI
 		end
 	end)
 end
