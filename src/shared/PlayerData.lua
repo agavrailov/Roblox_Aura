@@ -41,6 +41,32 @@ function PlayerData.addLumin(player: Player, amount: number)
 	end
 end
 
+function PlayerData.subtractLumin(player: Player, amount: number)
+	local currentLumin = PlayerData.get(player, "Lumin")
+	if currentLumin ~= nil then
+		PlayerData.set(player, "Lumin", currentLumin - amount)
+	end
+end
+
+function PlayerData.hasAura(player: Player, auraName: string)
+	local auras = PlayerData.get(player, "Auras")
+	if auras then
+		for _, ownedAura in ipairs(auras) do
+			if ownedAura == auraName then
+				return true
+			end
+		end
+	end
+	return false
+end
+
+function PlayerData.addAura(player: Player, auraName: string)
+	local auras = PlayerData.get(player, "Auras")
+	if auras and not PlayerData.hasAura(player, auraName) then
+		table.insert(auras, auraName)
+	end
+end
+
 function PlayerData.load(player: Player)
 	local success, data = pcall(function()
 		return PlayerDataStore:GetAsync(player.UserId)

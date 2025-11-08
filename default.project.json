@@ -9,6 +9,9 @@
       "$path": "src/shared",
       "UpdateLumin": {
         "$className": "RemoteEvent"
+      },
+      "CraftAura": {
+        "$className": "RemoteEvent"
       }
     },
     "StarterPlayer": {
