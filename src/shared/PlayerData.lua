@@ -93,6 +93,12 @@ function PlayerData.load(player: Player)
 		for k, v in pairs(data) do
 			playerDataCache[player.UserId][k] = v
 		end
+		
+		-- Fallback: If EquippedAura is nil but player owns auras, equip the first one
+		if not playerDataCache[player.UserId].EquippedAura and #playerDataCache[player.UserId].Auras > 0 then
+			playerDataCache[player.UserId].EquippedAura = playerDataCache[player.UserId].Auras[1]
+		end
+
 		print("Loaded data for " .. player.Name .. ": " .. game.HttpService:JSONEncode(playerDataCache[player.UserId]))
 	else
 		playerDataCache[player.UserId] = table.clone(DEFAULT_DATA)

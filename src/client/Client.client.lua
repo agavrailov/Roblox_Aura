@@ -47,9 +47,7 @@ EquipAuraEvent.OnClientEvent:Connect(updateAuraVisual)
 local function onCharacterAdded(character)
 	-- Wait a moment for the character to be fully set up
 	task.wait(1)
-	-- Re-apply the current aura visual if one is equipped
-	local equippedAura = EquipAuraEvent:InvokeServer() -- This won't work, need to get from server
-	-- For now, we'll rely on the server sending the equipped aura on player join/respawn
+	-- The server will send the equipped aura after character spawn.
 end
 
 player.CharacterAdded:Connect(onCharacterAdded)

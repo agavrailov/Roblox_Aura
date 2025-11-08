@@ -11,26 +11,26 @@ AuraEffectCreators["Basic Aura"] = function(parentPart: BasePart)
 	local auraPart = Instance.new("Part")
 	auraPart.Name = "AuraEffectPart"
 	auraPart.Shape = Enum.PartType.Ball
-	auraPart.Size = Vector3.new(8, 8, 8) -- Uniform sphere for debugging
+	auraPart.Size = Vector3.new(8, 8, 8) -- Uniform sphere
 	auraPart.Anchored = false
 	auraPart.CanCollide = false
 	auraPart.Massless = true -- Prevent physics interference
-	auraPart.Transparency = 1 -- Make it transparent again
+	auraPart.Transparency = 1 -- Make it transparent
 	auraPart.Parent = parentPart -- Parent to the torso itself
 	auraPart.CFrame = parentPart.CFrame * CFrame.new(0, 2, 0) -- Position it with an offset
 
 	local particleEmitter = Instance.new("ParticleEmitter")
-	particleEmitter.Rate = 250 -- Increased rate
+	particleEmitter.Rate = 150 -- Balanced rate
 	particleEmitter.Lifetime = NumberRange.new(0.8, 1.2)
 	particleEmitter.Speed = NumberRange.new(0)
 	particleEmitter.SpreadAngle = Vector2.new(360, 360)
 	particleEmitter.Shape = Enum.ParticleEmitterShape.Sphere
 	particleEmitter.ShapeStyle = Enum.ParticleEmitterShapeStyle.Surface
 	particleEmitter.Color = ColorSequence.new(Color3.fromRGB(255, 255, 150))
-	particleEmitter.Size = NumberSequence.new(0.3, 0) -- Start larger and shrink
+	particleEmitter.Size = NumberSequence.new(0.2, 0) -- Balanced size
 	particleEmitter.LightEmission = 1 -- Make particles glow more
 	particleEmitter.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0.2), -- Start more opaque
+		NumberSequenceKeypoint.new(0, 0.2), -- Balanced transparency
 		NumberSequenceKeypoint.new(0.8, 0.8),
 		NumberSequenceKeypoint.new(1, 1),
 	})
