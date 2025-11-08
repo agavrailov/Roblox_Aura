@@ -15,8 +15,5 @@ Players.PlayerAdded:Connect(function(player)
 	PlayerData.load(player) -- Ensure data is loaded before sending
 	local initialLumin = PlayerData.get(player, "Lumin")
 	UpdateLuminEvent:FireClient(player, initialLumin)
-
-	local equippedAura = PlayerData.getEquippedAura(player)
-	EquipAuraEvent:FireClient(player, equippedAura)
 end)
 

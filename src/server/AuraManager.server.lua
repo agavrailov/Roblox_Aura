@@ -3,14 +3,23 @@
 -- Manages the crafting and equipping of auras.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players") -- Need Players service here
 
 local PlayerData = require(ReplicatedStorage.PlayerData)
 local AuraConfig = require(ReplicatedStorage.AuraConfig)
 local CraftAuraEvent = ReplicatedStorage:WaitForChild("CraftAura")
 local UpdateLuminEvent = ReplicatedStorage:WaitForChild("UpdateLumin")
-local EquipAuraEvent = ReplicatedStorage:WaitForChild("EquipAura") -- New RemoteEvent
+local EquipAuraEvent = ReplicatedStorage:WaitForChild("EquipAura")
+local UpdateAurasEvent = ReplicatedStorage:WaitForChild("UpdateAuras") -- New RemoteEvent
 
 print("AuraManager Server Script Loaded")
+
+-- Helper function to send all relevant aura data to a client
+local function sendAuraDataToClient(player: Player)
+	local ownedAuras = PlayerData.get(player, "Auras")
+	local equippedAura = PlayerData.getEquippedAura(player)
+	UpdateAurasEvent:FireClient(player, ownedAuras, equippedAura)
+end
 
 local function onEquipAura(player: Player, auraName: string?)
 	if auraName and not PlayerData.hasAura(player, auraName) then
@@ -19,6 +28,7 @@ local function onEquipAura(player: Player, auraName: string?)
 	end
 	PlayerData.setEquippedAura(player, auraName)
 	EquipAuraEvent:FireClient(player, auraName) -- Notify client to update visual
+	sendAuraDataToClient(player) -- Update inventory UI
 	print("Player " .. player.Name .. " equipped: " .. tostring(auraName))
 end
 
@@ -52,9 +62,15 @@ local function onCraftAura(player: Player, auraName: string)
 	local newLumin = PlayerData.get(player, "Lumin")
 	UpdateLuminEvent:FireClient(player, newLumin)
 	EquipAuraEvent:FireClient(player, auraName) -- Notify client to update visual
+	sendAuraDataToClient(player) -- Update inventory UI
 
 	print("Successfully crafted '" .. auraName .. "' for " .. player.Name .. ". New Lumin: " .. tostring(newLumin))
 end
 
 CraftAuraEvent.OnServerEvent:Connect(onCraftAura)
-EquipAuraEvent.OnServerEvent:Connect(onEquipAura) -- Connect the new event
+EquipAuraEvent.OnServerEvent:Connect(onEquipAura)
+
+-- When a player joins, send them their initial aura data
+Players.PlayerAdded:Connect(function(player)
+	sendAuraDataToClient(player)
+end)
