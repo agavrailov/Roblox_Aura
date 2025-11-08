@@ -23,8 +23,8 @@ function ZoneManager.canEnterZone(player: Player, zoneName: string): (boolean, s
 		return true, nil -- No aura required, access granted
 	end
 
-	local hasAura = PlayerData.hasAura(player, zoneData.RequiredAura)
-	if hasAura then
+	local equippedAura = PlayerData.getEquippedAura(player)
+	if equippedAura == zoneData.RequiredAura then
 		return true, nil
 	else
 		return false, "Requires " .. zoneData.RequiredAura .. " to enter this zone."
