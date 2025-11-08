@@ -3,7 +3,9 @@
 -- Manages the crafting and equipping of auras.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Players = game:GetService("Players") -- Need Players service here
+local Players = game:GetService("Players")
+
+local AuraManager = {} -- Define the AuraManager table
 
 local PlayerData = require(ReplicatedStorage.PlayerData)
 local AuraConfig = require(ReplicatedStorage.AuraConfig)
