@@ -19,17 +19,16 @@ local PLAYER_BLOCK_GROUP_NAME = "PlayerBlockBarrier"
 -- Configure Collision Groups once
 local function setupCollisionGroups()
 	local groupsToCreate = {BARRIER_GROUP_NAME, PLAYER_PASS_GROUP_NAME, PLAYER_BLOCK_GROUP_NAME}
+	-- First, ensure all groups are created
 	for _, groupName in ipairs(groupsToCreate) do
 		if PhysicsService:GetCollisionGroupFromName(groupName) == nil then
 			PhysicsService:CreateCollisionGroup(groupName)
 		end
 	end
 
-	-- Barrier does not collide with players who can pass
+	-- Then, set collision rules
 	PhysicsService:SetCollisionGroupCollidable(BARRIER_GROUP_NAME, PLAYER_PASS_GROUP_NAME, false)
-	-- Barrier collides with players who cannot pass
 	PhysicsService:SetCollisionGroupCollidable(BARRIER_GROUP_NAME, PLAYER_BLOCK_GROUP_NAME, true)
-	-- Players who can pass do not collide with players who cannot pass (or themselves)
 	PhysicsService:SetCollisionGroupCollidable(PLAYER_PASS_GROUP_NAME, PLAYER_BLOCK_GROUP_NAME, true)
 	PhysicsService:SetCollisionGroupCollidable(PLAYER_PASS_GROUP_NAME, PLAYER_PASS_GROUP_NAME, true)
 	PhysicsService:SetCollisionGroupCollidable(PLAYER_BLOCK_GROUP_NAME, PLAYER_BLOCK_GROUP_NAME, true)
