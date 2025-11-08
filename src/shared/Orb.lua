@@ -5,7 +5,6 @@
 local Orb = {}
 Orb.__index = Orb
 
-local DEBOUNCE_SECONDS = 1 -- How long the orb is disabled after being collected
 local RESPAWN_SECONDS = 5 -- How long it takes for the orb to reappear
 
 function Orb.new(position: Vector3, luminAmount: number)
@@ -50,11 +49,6 @@ function Orb:collect()
 	self.part.Transparency = 1
 	self.part.ParticleEmitter.Enabled = false
 
-	-- Debounce period
-	task.delay(DEBOUNCE_SECONDS, function()
-		self.enabled = true
-	end)
-
 	-- Respawn logic
 	task.delay(RESPAWN_SECONDS, function()
 		self:respawn()
@@ -67,6 +61,7 @@ function Orb:respawn()
 	print("Orb respawned.")
 	self.part.Transparency = 0
 	self.part.ParticleEmitter.Enabled = true
+	self.enabled = true -- Re-enable collection only when orb is visible
 end
 
 return Orb
