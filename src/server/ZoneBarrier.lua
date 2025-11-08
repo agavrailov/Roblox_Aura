@@ -95,7 +95,7 @@ function ZoneBarrier:setPassableForPlayer(player: Player, passable: boolean)
 
 	for _, part in ipairs(character:GetDescendants()) do
 		if part:IsA("BasePart") then
-			PhysicsService:SetPartCollisionGroup(part, targetGroup)
+			part.CollisionGroup = targetGroup -- Updated API
 		end
 	end
 
@@ -105,7 +105,7 @@ function ZoneBarrier:setPassableForPlayer(player: Player, passable: boolean)
 		-- Reapply collision group to new character parts
 		for _, part in ipairs(newCharacter:GetDescendants()) do
 			if part:IsA("BasePart") then
-				PhysicsService:SetPartCollisionGroup(part, targetGroup)
+				part.CollisionGroup = targetGroup -- Updated API
 			end
 		end
 		characterAddedConnection:Disconnect() -- Disconnect after first use
