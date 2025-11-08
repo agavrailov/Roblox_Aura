@@ -11,6 +11,10 @@
       "ZoneBarrier": {
         "$className": "ModuleScript",
         "$path": "src/server/ZoneBarrier.lua"
+      },
+      "BarrierCreator": {
+        "$className": "Script",
+        "$path": "src/server/BarrierCreator.server.lua"
       }
     },
     "ReplicatedStorage": {
