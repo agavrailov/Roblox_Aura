@@ -6,11 +6,11 @@
       "$path": "src/server",
       "ZoneManager": {
         "$className": "ModuleScript",
-        "$path": "src/server/ZoneManager.server.lua"
+        "$path": "src/server/ZoneManager.lua"
       },
       "ZoneBarrier": {
         "$className": "ModuleScript",
-        "$path": "src/server/ZoneBarrier.server.lua"
+        "$path": "src/server/ZoneBarrier.lua"
       }
     },
     "ReplicatedStorage": {
