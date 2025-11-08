@@ -11,11 +11,13 @@ AuraEffectCreators["Basic Aura"] = function(parentPart: BasePart)
 	local auraPart = Instance.new("Part")
 	auraPart.Name = "AuraEffectPart"
 	auraPart.Shape = Enum.PartType.Ball
-	auraPart.Size = Vector3.new(8, 2, 8) -- Wider, flatter shape around the torso
+	auraPart.Size = Vector3.new(8, 8, 8) -- Uniform sphere for debugging
 	auraPart.Anchored = false
 	auraPart.CanCollide = false
-	auraPart.Transparency = 1
-	auraPart.Parent = parentPart
+	auraPart.Massless = true -- Prevent physics interference
+	auraPart.Transparency = 1 -- Make it transparent again
+	auraPart.Parent = parentPart -- Parent to the torso itself
+	auraPart.CFrame = parentPart.CFrame * CFrame.new(0, 2, 0) -- Position it with an offset
 
 	local particleEmitter = Instance.new("ParticleEmitter")
 	particleEmitter.Rate = 250 -- Increased rate
