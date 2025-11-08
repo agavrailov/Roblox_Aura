@@ -22,23 +22,23 @@ local function setupCollisionGroups()
 	-- First, ensure all groups are created
 	for _, groupName in ipairs(groupsToCreate) do
 		local groupExists = false
-		for _, groupInfo in ipairs(PhysicsService:GetCollisionGroups()) do
+		for _, groupInfo in ipairs(PhysicsService:GetRegisteredCollisionGroups()) do -- Updated API
 			if groupInfo.name == groupName then
 				groupExists = true
 				break
-			end
+			}
 		end
 		if not groupExists then
-			PhysicsService:CreateCollisionGroup(groupName)
+			PhysicsService:RegisterCollisionGroup(groupName) -- Updated API
 		end
 	end
 
 	-- Then, set collision rules
-	PhysicsService:SetCollisionGroupCollidable(BARRIER_GROUP_NAME, PLAYER_PASS_GROUP_NAME, false)
-	PhysicsService:SetCollisionGroupCollidable(BARRIER_GROUP_NAME, PLAYER_BLOCK_GROUP_NAME, true)
-	PhysicsService:SetCollisionGroupCollidable(PLAYER_PASS_GROUP_NAME, PLAYER_BLOCK_GROUP_NAME, true)
-	PhysicsService:SetCollisionGroupCollidable(PLAYER_PASS_GROUP_NAME, PLAYER_PASS_GROUP_NAME, true)
-	PhysicsService:SetCollisionGroupCollidable(PLAYER_BLOCK_GROUP_NAME, PLAYER_BLOCK_GROUP_NAME, true)
+	PhysicsService:CollisionGroupSetCollidable(BARRIER_GROUP_NAME, PLAYER_PASS_GROUP_NAME, false) -- Updated API
+	PhysicsService:CollisionGroupSetCollidable(BARRIER_GROUP_NAME, PLAYER_BLOCK_GROUP_NAME, true) -- Updated API
+	PhysicsService:CollisionGroupSetCollidable(PLAYER_PASS_GROUP_NAME, PLAYER_BLOCK_GROUP_NAME, true) -- Updated API
+	PhysicsService:CollisionGroupSetCollidable(PLAYER_PASS_GROUP_NAME, PLAYER_PASS_GROUP_NAME, true) -- Updated API
+	PhysicsService:CollisionGroupSetCollidable(PLAYER_BLOCK_GROUP_NAME, PLAYER_BLOCK_GROUP_NAME, true) -- Updated API
 end
 
 setupCollisionGroups() -- Call once when the module loads
