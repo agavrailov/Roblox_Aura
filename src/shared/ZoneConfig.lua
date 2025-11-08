@@ -11,7 +11,11 @@ ZoneConfig.Zones = {
 		OrbTypes = {
 			{Name = "Basic Orb", LuminValue = 1, RespawnTime = 5},
 		},
-		SpawnPoints = {}, -- To be populated manually in Studio or dynamically
+		SpawnPoints = {
+			Vector3.new(0, 3, -10),
+			Vector3.new(10, 3, -10),
+			Vector3.new(-10, 3, -10),
+		},
 	},
 
 	["Forest Zone"] = {
@@ -20,7 +24,11 @@ ZoneConfig.Zones = {
 		OrbTypes = {
 			{Name = "Forest Orb", LuminValue = 5, RespawnTime = 7},
 		},
-		SpawnPoints = {}, -- To be populated manually in Studio or dynamically
+		SpawnPoints = {
+			Vector3.new(40, 3, -10),
+			Vector3.new(50, 3, -10),
+			Vector3.new(60, 3, -10),
+		},
 	},
 
 	-- Add more zones as needed

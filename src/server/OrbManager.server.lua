@@ -47,18 +47,9 @@ end
 
 -- Spawn orbs based on ZoneConfig
 for zoneName, zoneData in pairs(ZoneConfig.Zones) do
-	-- For now, use a single placeholder spawn point for each zone
-	-- In a real game, these would be defined in ZoneConfig or dynamically generated
-	local placeholderSpawnPoint = Vector3.new(0, 3, 0) -- Default for starting zone
-	if zoneName == "Forest Zone" then
-		placeholderSpawnPoint = Vector3.new(50, 3, 0) -- Placeholder for Forest Zone
-	end
-	-- Add more placeholder spawn points for other zones as needed
-
-	for _, orbType in pairs(zoneData.OrbTypes) do
-		-- Spawn multiple orbs of each type for demonstration
-		for i = 1, 3 do -- Spawn 3 orbs of each type
-			spawnOrb(placeholderSpawnPoint + Vector3.new(math.random(-10, 10), 0, math.random(-10, 10)), orbType.Name, orbType.LuminValue, orbType.RespawnTime)
+	for _, spawnPoint in ipairs(zoneData.SpawnPoints) do
+		for _, orbType in pairs(zoneData.OrbTypes) do
+			spawnOrb(spawnPoint, orbType.Name, orbType.LuminValue, orbType.RespawnTime)
 		end
 	end
 end
