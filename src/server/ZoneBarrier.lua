@@ -4,11 +4,35 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
+local PhysicsService = game:GetService("PhysicsService") -- New: Require PhysicsService
 
 local ZoneManager = require(game.ServerScriptService.ZoneManager)
 
 local ZoneBarrier = {}
 ZoneBarrier.__index = ZoneBarrier
+
+-- Collision Group Names
+local BARRIER_GROUP_NAME = "ZoneBarrier"
+local PLAYER_PASS_GROUP_NAME = "PlayerPassBarrier"
+local PLAYER_BLOCK_GROUP_NAME = "PlayerBlockBarrier"
+
+-- Configure Collision Groups once
+local function setupCollisionGroups()
+	PhysicsService:CreateCollisionGroup(BARRIER_GROUP_NAME)
+	PhysicsService:CreateCollisionGroup(PLAYER_PASS_GROUP_NAME)
+	PhysicsService:CreateCollisionGroup(PLAYER_BLOCK_GROUP_NAME)
+
+	-- Barrier does not collide with players who can pass
+	PhysicsService:SetCollisionGroupCollidable(BARRIER_GROUP_NAME, PLAYER_PASS_GROUP_NAME, false)
+	-- Barrier collides with players who cannot pass
+	PhysicsService:SetCollisionGroupCollidable(BARRIER_GROUP_NAME, PLAYER_BLOCK_GROUP_NAME, true)
+	-- Players who can pass do not collide with players who cannot pass (or themselves)
+	PhysicsService:SetCollisionGroupCollidable(PLAYER_PASS_GROUP_NAME, PLAYER_BLOCK_GROUP_NAME, true)
+	PhysicsService:SetCollisionGroupCollidable(PLAYER_PASS_GROUP_NAME, PLAYER_PASS_GROUP_NAME, true)
+	PhysicsService:SetCollisionGroupCollidable(PLAYER_BLOCK_GROUP_NAME, PLAYER_BLOCK_GROUP_NAME, true)
+end
+
+setupCollisionGroups() -- Call once when the module loads
 
 function ZoneBarrier.new(barrierPart: BasePart, targetZoneName: string)
 	local self = setmetatable({}, ZoneBarrier)
@@ -18,7 +42,7 @@ function ZoneBarrier.new(barrierPart: BasePart, targetZoneName: string)
 	self.playersInside = {} -- Keep track of players currently touching the barrier
 
 	-- Initial setup of the barrier part
-	self.barrierPart.CanCollide = true
+	self.barrierPart.CollisionGroup = BARRIER_GROUP_NAME
 	self.barrierPart.Transparency = 0.5
 	self.barrierPart.Color = Color3.fromRGB(255, 0, 0) -- Red for impassable
 
@@ -56,14 +80,39 @@ function ZoneBarrier:onPlayerTouched(player: Player)
 end
 
 function ZoneBarrier:setPassableForPlayer(player: Player, passable: boolean)
-	-- This is a simplified approach. In a real game, you might use
-	-- CollisionGroups or a more complex client-side solution.
+	local targetGroup = passable and PLAYER_PASS_GROUP_NAME or PLAYER_BLOCK_GROUP_NAME
+	local character = player.Character
+	if not character then return end
+
+	for _, part in ipairs(character:GetDescendants()) do
+		if part:IsA("BasePart") then
+			PhysicsService:SetPartCollisionGroup(part, targetGroup)
+		end
+	end
+
+	-- Store the connection to disconnect later
+	local characterAddedConnection
+	characterAddedConnection = player.CharacterAdded:Connect(function(newCharacter)
+		-- Reapply collision group to new character parts
+		for _, part in ipairs(newCharacter:GetDescendants()) do
+			if part:IsA("BasePart") then
+				PhysicsService:SetPartCollisionGroup(part, targetGroup)
+			end
+		end
+		characterAddedConnection:Disconnect() -- Disconnect after first use
+	end)
+
+	-- Clean up connection when player leaves
+	local characterRemovingConnection
+	characterRemovingConnection = player.CharacterRemoving:Connect(function(char)
+		characterAddedConnection:Disconnect()
+		characterRemovingConnection:Disconnect()
+	end)
+
 	if passable then
-		self.barrierPart.CanCollide = false
 		self.barrierPart.Transparency = 0.8
 		self.barrierPart.Color = Color3.fromRGB(0, 255, 0) -- Green for passable
 	else
-		self.barrierPart.CanCollide = true
 		self.barrierPart.Transparency = 0.5
 		self.barrierPart.Color = Color3.fromRGB(255, 0, 0) -- Red for impassable
 	end
