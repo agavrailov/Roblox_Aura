@@ -70,7 +70,6 @@ end
 CraftAuraEvent.OnServerEvent:Connect(onCraftAura)
 EquipAuraEvent.OnServerEvent:Connect(onEquipAura)
 
--- When a player joins, send them their initial aura data
-Players.PlayerAdded:Connect(function(player)
-	sendAuraDataToClient(player)
-end)
+AuraManager.sendAuraDataToClient = sendAuraDataToClient -- Make public
+
+return AuraManager

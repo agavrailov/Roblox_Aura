@@ -10,7 +10,7 @@ local AuraInventoryGui = require(script.Parent.UI.AuraInventoryGui) -- New modul
 
 local UpdateLuminEvent = ReplicatedStorage:WaitForChild("UpdateLumin")
 local EquipAuraEvent = ReplicatedStorage:WaitForChild("EquipAura")
-local UpdateAurasEvent = Instance.new("RemoteEvent") -- Will be created in default.project.json
+local UpdateAurasEvent = ReplicatedStorage:WaitForChild("UpdateAuras") -- Get from ReplicatedStorage
 
 print("Aura Collector Simulator Client Script Loaded")
 

@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 
 local PlayerData = require(ReplicatedStorage.PlayerData)
+local AuraManager = require(script.Parent.AuraManager) -- Require AuraManager
 local UpdateLuminEvent = ReplicatedStorage:WaitForChild("UpdateLumin")
 local EquipAuraEvent = ReplicatedStorage:WaitForChild("EquipAura")
 
@@ -15,5 +16,8 @@ Players.PlayerAdded:Connect(function(player)
 	PlayerData.load(player) -- Ensure data is loaded before sending
 	local initialLumin = PlayerData.get(player, "Lumin")
 	UpdateLuminEvent:FireClient(player, initialLumin)
+
+	-- Now send the full aura data to the client
+	AuraManager.sendAuraDataToClient(player)
 end)
 
