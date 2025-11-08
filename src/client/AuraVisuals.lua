@@ -96,17 +96,17 @@ AuraEffectCreators["Blue Aura"] = function(parentPart: BasePart)
 	auraPart.CFrame = parentPart.CFrame * CFrame.new(0, 2, 0) -- Position it with an offset
 
 	local particleEmitter = Instance.new("ParticleEmitter")
-	particleEmitter.Rate = 150 -- Balanced rate
+	particleEmitter.Rate = 250 -- Increased rate
 	particleEmitter.Lifetime = NumberRange.new(0.8, 1.2)
 	particleEmitter.Speed = NumberRange.new(0)
 	particleEmitter.SpreadAngle = Vector2.new(360, 360)
 	particleEmitter.Shape = Enum.ParticleEmitterShape.Sphere
 	particleEmitter.ShapeStyle = Enum.ParticleEmitterShapeStyle.Surface
 	particleEmitter.Color = ColorSequence.new(Color3.fromRGB(0, 0, 255)) -- Blue color
-	particleEmitter.Size = NumberSequence.new(0.2, 0) -- Balanced size
+	particleEmitter.Size = NumberSequence.new(0.3, 0) -- Increased size
 	particleEmitter.LightEmission = 1 -- Make particles glow more
 	particleEmitter.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0.2), -- Balanced transparency
+		NumberSequenceKeypoint.new(0, 0.1), -- More opaque
 		NumberSequenceKeypoint.new(0.8, 0.8),
 		NumberSequenceKeypoint.new(1, 1),
 	})
