@@ -10,15 +10,24 @@ local PlayerData = require(ReplicatedStorage.PlayerData)
 
 print("OrbManager Server Script Loaded")
 
+-- Table to map Part instances to their Orb objects
+local activeOrbs = {}
+
+-- Function to spawn an orb and add it to our map
+local function spawnOrb(position: Vector3, luminAmount: number)
+	local orbObject, orbPart = Orb.new(position, luminAmount)
+	activeOrbs[orbPart] = orbObject
+end
+
 -- Spawn some initial orbs
-local orb1 = Orb.new(Vector3.new(0, 3, -10), 10)
-local orb2 = Orb.new(Vector3.new(10, 3, -10), 10)
-local orb3 = Orb.new(Vector3.new(-10, 3, -10), 10)
+spawnOrb(Vector3.new(0, 3, -10), 10)
+spawnOrb(Vector3.new(10, 3, -10), 10)
+spawnOrb(Vector3.new(-10, 3, -10), 10)
 
 -- Handle orb collection
 workspace.Touched:Connect(function(hitPart, otherPart)
-	-- Check if the part that was hit has an Orb module attached
-	local orbModule = hitPart:GetAttribute("OrbModule")
+	-- Check if the touched part is a registered orb
+	local orbModule = activeOrbs[hitPart]
 	if not orbModule then
 		return
 	end

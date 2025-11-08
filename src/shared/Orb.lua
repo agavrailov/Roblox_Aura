@@ -34,10 +34,8 @@ function Orb.new(position: Vector3, luminAmount: number)
 
 	self.part = part
 	
-	-- Attach the orb object to the part so we can find it on touch
-	part:SetAttribute("OrbModule", self)
-
-	return self
+	-- The OrbManager will be responsible for mapping this part to the object
+	return self, part
 end
 
 function Orb:collect()
