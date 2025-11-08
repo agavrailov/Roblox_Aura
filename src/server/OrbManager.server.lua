@@ -7,6 +7,7 @@ local Players = game:GetService("Players")
 
 local Orb = require(ReplicatedStorage.Orb)
 local PlayerData = require(ReplicatedStorage.PlayerData)
+local ZoneConfig = require(ReplicatedStorage.ZoneConfig) -- New: Require ZoneConfig
 local UpdateLuminEvent = ReplicatedStorage:WaitForChild("UpdateLumin")
 
 print("OrbManager Server Script Loaded")
@@ -15,8 +16,8 @@ print("OrbManager Server Script Loaded")
 local activeOrbs = {}
 
 -- Function to spawn an orb and add it to our map
-local function spawnOrb(position: Vector3, luminAmount: number)
-	local orbObject, orbPart = Orb.new(position, luminAmount)
+local function spawnOrb(position: Vector3, orbName: string, luminAmount: number, respawnTime: number)
+	local orbObject, orbPart = Orb.new(position, luminAmount, respawnTime) -- Orb module needs to be updated to accept respawnTime
 	activeOrbs[orbPart] = orbObject
 
 	orbPart.Touched:Connect(function(otherPart)
@@ -44,8 +45,21 @@ local function spawnOrb(position: Vector3, luminAmount: number)
 	end)
 end
 
--- Spawn some initial orbs
-spawnOrb(Vector3.new(0, 3, -10), 10)
-spawnOrb(Vector3.new(10, 3, -10), 10)
-spawnOrb(Vector3.new(-10, 3, -10), 10)
+-- Spawn orbs based on ZoneConfig
+for zoneName, zoneData in pairs(ZoneConfig.Zones) do
+	-- For now, use a single placeholder spawn point for each zone
+	-- In a real game, these would be defined in ZoneConfig or dynamically generated
+	local placeholderSpawnPoint = Vector3.new(0, 3, 0) -- Default for starting zone
+	if zoneName == "Forest Zone" then
+		placeholderSpawnPoint = Vector3.new(50, 3, 0) -- Placeholder for Forest Zone
+	end
+	-- Add more placeholder spawn points for other zones as needed
+
+	for _, orbType in pairs(zoneData.OrbTypes) do
+		-- Spawn multiple orbs of each type for demonstration
+		for i = 1, 3 do -- Spawn 3 orbs of each type
+			spawnOrb(placeholderSpawnPoint + Vector3.new(math.random(-10, 10), 0, math.random(-10, 10)), orbType.Name, orbType.LuminValue, orbType.RespawnTime)
+		end
+	end
+end
 

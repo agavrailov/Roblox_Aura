@@ -3,7 +3,11 @@
   "tree": {
     "$className": "DataModel",
     "ServerScriptService": {
-      "$path": "src/server"
+      "$path": "src/server",
+      "ZoneManager": {
+        "$className": "ModuleScript",
+        "$path": "src/server/ZoneManager.server.lua"
+      }
     },
     "ReplicatedStorage": {
       "$path": "src/shared",

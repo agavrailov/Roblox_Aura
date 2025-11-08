@@ -5,12 +5,11 @@
 local Orb = {}
 Orb.__index = Orb
 
-local RESPAWN_SECONDS = 5 -- How long it takes for the orb to reappear
-
-function Orb.new(position: Vector3, luminAmount: number)
+function Orb.new(position: Vector3, luminAmount: number, respawnTime: number)
 	local self = setmetatable({}, Orb)
 
 	self.luminAmount = luminAmount
+	self.respawnTime = respawnTime
 	self.enabled = true
 
 	-- Create the visual part for the orb
@@ -50,7 +49,7 @@ function Orb:collect()
 	self.part.ParticleEmitter.Enabled = false
 
 	-- Respawn logic
-	task.delay(RESPAWN_SECONDS, function()
+	task.delay(self.respawnTime, function()
 		self:respawn()
 	end)
 	
