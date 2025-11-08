@@ -21,7 +21,14 @@ local function setupCollisionGroups()
 	local groupsToCreate = {BARRIER_GROUP_NAME, PLAYER_PASS_GROUP_NAME, PLAYER_BLOCK_GROUP_NAME}
 	-- First, ensure all groups are created
 	for _, groupName in ipairs(groupsToCreate) do
-		if PhysicsService:GetCollisionGroupFromName(groupName) == nil then
+		local groupExists = false
+		for _, groupInfo in ipairs(PhysicsService:GetCollisionGroups()) do
+			if groupInfo.name == groupName then
+				groupExists = true
+				break
+			end
+		end
+		if not groupExists then
 			PhysicsService:CreateCollisionGroup(groupName)
 		end
 	end
