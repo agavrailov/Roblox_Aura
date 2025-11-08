@@ -6,13 +6,17 @@ local Players = game:GetService("Players")
 
 local PlayerData = require(ReplicatedStorage.PlayerData)
 local UpdateLuminEvent = ReplicatedStorage:WaitForChild("UpdateLumin")
+local EquipAuraEvent = ReplicatedStorage:WaitForChild("EquipAura")
 
 print("Aura Collector Simulator Server Script Loaded")
 
--- Send initial Lumin to player when they join
+-- Send initial Lumin and Equipped Aura to player when they join
 Players.PlayerAdded:Connect(function(player)
 	PlayerData.load(player) -- Ensure data is loaded before sending
 	local initialLumin = PlayerData.get(player, "Lumin")
 	UpdateLuminEvent:FireClient(player, initialLumin)
+
+	local equippedAura = PlayerData.getEquippedAura(player)
+	EquipAuraEvent:FireClient(player, equippedAura)
 end)
 

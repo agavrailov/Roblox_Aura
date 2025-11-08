@@ -67,6 +67,21 @@ function PlayerData.addAura(player: Player, auraName: string)
 	end
 end
 
+function PlayerData.setEquippedAura(player: Player, auraName: string?)
+	local data = playerDataCache[player.UserId]
+	if data then
+		data.EquippedAura = auraName
+	end
+end
+
+function PlayerData.getEquippedAura(player: Player): string?
+	local data = playerDataCache[player.UserId]
+	if data then
+		return data.EquippedAura
+	end
+	return nil
+end
+
 function PlayerData.load(player: Player)
 	local success, data = pcall(function()
 		return PlayerDataStore:GetAsync(player.UserId)

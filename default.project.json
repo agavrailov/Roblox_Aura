@@ -12,6 +12,9 @@
       },
       "CraftAura": {
         "$className": "RemoteEvent"
+      },
+      "EquipAura": {
+        "$className": "RemoteEvent"
       }
     },
     "StarterPlayer": {

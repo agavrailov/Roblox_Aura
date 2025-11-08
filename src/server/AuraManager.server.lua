@@ -8,8 +8,19 @@ local PlayerData = require(ReplicatedStorage.PlayerData)
 local AuraConfig = require(ReplicatedStorage.AuraConfig)
 local CraftAuraEvent = ReplicatedStorage:WaitForChild("CraftAura")
 local UpdateLuminEvent = ReplicatedStorage:WaitForChild("UpdateLumin")
+local EquipAuraEvent = ReplicatedStorage:WaitForChild("EquipAura") -- New RemoteEvent
 
 print("AuraManager Server Script Loaded")
+
+local function onEquipAura(player: Player, auraName: string?)
+	if auraName and not PlayerData.hasAura(player, auraName) then
+		warn("Player " .. player.Name .. " tried to equip an aura they don't own: " .. tostring(auraName))
+		return
+	end
+	PlayerData.setEquippedAura(player, auraName)
+	EquipAuraEvent:FireClient(player, auraName) -- Notify client to update visual
+	print("Player " .. player.Name .. " equipped: " .. tostring(auraName))
+end
 
 local function onCraftAura(player: Player, auraName: string)
 	print("Player " .. player.Name .. " is attempting to craft '" .. auraName .. "'")
@@ -35,12 +46,15 @@ local function onCraftAura(player: Player, auraName: string)
 	-- 2. Process the request
 	PlayerData.subtractLumin(player, auraData.Cost)
 	PlayerData.addAura(player, auraName)
+	PlayerData.setEquippedAura(player, auraName) -- Automatically equip newly crafted aura
 
 	-- 3. Notify the client and log the success
 	local newLumin = PlayerData.get(player, "Lumin")
 	UpdateLuminEvent:FireClient(player, newLumin)
+	EquipAuraEvent:FireClient(player, auraName) -- Notify client to update visual
 
 	print("Successfully crafted '" .. auraName .. "' for " .. player.Name .. ". New Lumin: " .. tostring(newLumin))
 end
 
 CraftAuraEvent.OnServerEvent:Connect(onCraftAura)
+EquipAuraEvent.OnServerEvent:Connect(onEquipAura) -- Connect the new event
