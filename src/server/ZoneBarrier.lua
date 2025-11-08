@@ -34,11 +34,8 @@ local function setupCollisionGroups()
 	end
 
 	-- Then, set collision rules
-	PhysicsService:CollisionGroupSetCollidable(BARRIER_GROUP_NAME, PLAYER_PASS_GROUP_NAME, false) -- Updated API
-	PhysicsService:CollisionGroupSetCollidable(BARRIER_GROUP_NAME, PLAYER_BLOCK_GROUP_NAME, true) -- Updated API
-	PhysicsService:CollisionGroupSetCollidable(PLAYER_PASS_GROUP_NAME, PLAYER_BLOCK_GROUP_NAME, true) -- Updated API
-	PhysicsService:CollisionGroupSetCollidable(PLAYER_PASS_GROUP_NAME, PLAYER_PASS_GROUP_NAME, true) -- Updated API
-	PhysicsService:CollisionGroupSetCollidable(PLAYER_BLOCK_GROUP_NAME, PLAYER_BLOCK_GROUP_NAME, true) -- Updated API
+	PhysicsService:CollisionGroupSetCollidable(BARRIER_GROUP_NAME, PLAYER_PASS_GROUP_NAME, false) -- Barrier does not collide with players who can pass
+	PhysicsService:CollisionGroupSetCollidable(BARRIER_GROUP_NAME, PLAYER_BLOCK_GROUP_NAME, true) -- Barrier collides with players who cannot pass
 end
 
 setupCollisionGroups() -- Call once when the module loads
