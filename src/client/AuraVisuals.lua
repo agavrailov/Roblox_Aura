@@ -11,27 +11,30 @@ AuraEffectCreators["Basic Aura"] = function(parentPart: BasePart)
 	local auraPart = Instance.new("Part")
 	auraPart.Name = "AuraEffectPart"
 	auraPart.Shape = Enum.PartType.Ball
-	auraPart.Size = Vector3.new(6, 6, 6) -- The size of the part determines the emission area
+	auraPart.Size = Vector3.new(8, 2, 8) -- Wider, flatter shape around the torso
 	auraPart.Anchored = false
 	auraPart.CanCollide = false
 	auraPart.Transparency = 1
 	auraPart.Parent = parentPart
 
 	local particleEmitter = Instance.new("ParticleEmitter")
-	particleEmitter.Rate = 50
-	particleEmitter.Lifetime = NumberRange.new(0.5, 1)
+	particleEmitter.Rate = 150 -- Increased rate
+	particleEmitter.Lifetime = NumberRange.new(0.8, 1.2)
 	particleEmitter.Speed = NumberRange.new(0)
 	particleEmitter.SpreadAngle = Vector2.new(360, 360)
 	particleEmitter.Shape = Enum.ParticleEmitterShape.Sphere
 	particleEmitter.ShapeStyle = Enum.ParticleEmitterShapeStyle.Surface
 	particleEmitter.Color = ColorSequence.new(Color3.fromRGB(255, 255, 150))
+	particleEmitter.Size = NumberSequence.new(0.2, 0) -- Start larger and shrink
+	particleEmitter.LightEmission = 0.5 -- Make particles glow
 	particleEmitter.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0.5),
+		NumberSequenceKeypoint.new(0, 0.2), -- Start more opaque
+		NumberSequenceKeypoint.new(0.8, 0.8),
 		NumberSequenceKeypoint.new(1, 1),
 	})
 	particleEmitter.Parent = auraPart
 
-	-- Weld the effect part to the parent part (e.g., HumanoidRootPart)
+	-- Weld the effect part to the parent part (e.g., UpperTorso)
 	local weld = Instance.new("WeldConstraint")
 	weld.Part0 = auraPart
 	weld.Part1 = parentPart
@@ -42,9 +45,9 @@ end
 
 -- Creates and attaches an aura effect to a character model.
 function AuraVisuals.create(auraName: string, character: Model)
-	local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-	if not humanoidRootPart then
-		warn("Could not find HumanoidRootPart to attach aura to.")
+	local upperTorso = character:FindFirstChild("UpperTorso")
+	if not upperTorso then
+		warn("Could not find UpperTorso to attach aura to.")
 		return
 	end
 
@@ -56,7 +59,7 @@ function AuraVisuals.create(auraName: string, character: Model)
 	end
 
 	-- Create the effect and parent it to the character
-	local effect = creator(humanoidRootPart)
+	local effect = creator(upperTorso)
 
 	print("Attached visual effect for '" .. auraName .. "'")
 	return effect
@@ -64,9 +67,9 @@ end
 
 -- Removes an aura effect from a character.
 function AuraVisuals.remove(character: Model)
-	local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-	if humanoidRootPart then
-		local existingAura = humanoidRootPart:FindFirstChild("AuraEffectPart")
+	local upperTorso = character:FindFirstChild("UpperTorso")
+	if upperTorso then
+		local existingAura = upperTorso:FindFirstChild("AuraEffectPart")
 		if existingAura then
 			existingAura:Destroy()
 		end
