@@ -11,6 +11,7 @@ local AuraInventoryGui = require(script.Parent.UI.AuraInventoryGui) -- New modul
 local UpdateLuminEvent = ReplicatedStorage:WaitForChild("UpdateLumin")
 local EquipAuraEvent = ReplicatedStorage:WaitForChild("EquipAura")
 local UpdateAurasEvent = ReplicatedStorage:WaitForChild("UpdateAuras") -- Get from ReplicatedStorage
+local GetEquippedAuraFunction = ReplicatedStorage:WaitForChild("GetEquippedAura") -- New RemoteFunction
 
 print("Aura Collector Simulator Client Script Loaded")
 
@@ -105,7 +106,9 @@ end)
 local function onCharacterAdded(character)
 	-- Wait a moment for the character to be fully set up
 	task.wait(1)
-	-- The server will send the equipped aura after character spawn.
+	-- Request equipped aura from server and display it
+	local equippedAura = GetEquippedAuraFunction:InvokeServer()
+	updateAuraVisual(equippedAura)
 end
 
 player.CharacterAdded:Connect(onCharacterAdded)

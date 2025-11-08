@@ -18,6 +18,9 @@
       },
       "UpdateAuras": {
         "$className": "RemoteEvent"
+      },
+      "GetEquippedAura": {
+        "$className": "RemoteFunction"
       }
     },
     "StarterPlayer": {

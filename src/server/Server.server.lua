@@ -8,8 +8,14 @@ local PlayerData = require(ReplicatedStorage.PlayerData)
 local AuraManager = require(game.ServerScriptService.AuraManager) -- Require AuraManager explicitly
 local UpdateLuminEvent = ReplicatedStorage:WaitForChild("UpdateLumin")
 local EquipAuraEvent = ReplicatedStorage:WaitForChild("EquipAura")
+local GetEquippedAuraFunction = ReplicatedStorage:WaitForChild("GetEquippedAura") -- New RemoteFunction
 
 print("Aura Collector Simulator Server Script Loaded")
+
+-- Handle client requests for equipped aura
+GetEquippedAuraFunction.OnServerInvoke = function(player: Player): string?
+	return PlayerData.getEquippedAura(player)
+end
 
 -- Send initial Lumin and Equipped Aura to player when they join
 Players.PlayerAdded:Connect(function(player)
@@ -19,5 +25,9 @@ Players.PlayerAdded:Connect(function(player)
 
 	-- Now send the full aura data to the client
 	AuraManager.sendAuraDataToClient(player)
+
+	-- Also send the initial equipped aura to the client for visual display
+	local equippedAura = PlayerData.getEquippedAura(player)
+	EquipAuraEvent:FireClient(player, equippedAura)
 end)
 

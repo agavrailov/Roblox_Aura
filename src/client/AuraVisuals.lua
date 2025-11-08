@@ -45,6 +45,44 @@ AuraEffectCreators["Basic Aura"] = function(parentPart: BasePart)
 	return auraPart
 end
 
+AuraEffectCreators["Green Aura"] = function(parentPart: BasePart)
+	local auraPart = Instance.new("Part")
+	auraPart.Name = "AuraEffectPart"
+	auraPart.Shape = Enum.PartType.Ball
+	auraPart.Size = Vector3.new(8, 8, 8) -- Uniform sphere
+	auraPart.Anchored = false
+	auraPart.CanCollide = false
+	auraPart.Massless = true -- Prevent physics interference
+	auraPart.Transparency = 1 -- Make it transparent
+	auraPart.Parent = parentPart -- Parent to the torso itself
+	auraPart.CFrame = parentPart.CFrame * CFrame.new(0, 2, 0) -- Position it with an offset
+
+	local particleEmitter = Instance.new("ParticleEmitter")
+	particleEmitter.Rate = 150 -- Balanced rate
+	particleEmitter.Lifetime = NumberRange.new(0.8, 1.2)
+	particleEmitter.Speed = NumberRange.new(0)
+	particleEmitter.SpreadAngle = Vector2.new(360, 360)
+	particleEmitter.Shape = Enum.ParticleEmitterShape.Sphere
+	particleEmitter.ShapeStyle = Enum.ParticleEmitterShapeStyle.Surface
+	particleEmitter.Color = ColorSequence.new(Color3.fromRGB(0, 255, 0)) -- Green color
+	particleEmitter.Size = NumberSequence.new(0.2, 0) -- Balanced size
+	particleEmitter.LightEmission = 1 -- Make particles glow more
+	particleEmitter.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.2), -- Balanced transparency
+		NumberSequenceKeypoint.new(0.8, 0.8),
+		NumberSequenceKeypoint.new(1, 1),
+	})
+	particleEmitter.Parent = auraPart
+
+	-- Weld the effect part to the parent part
+	local weld = Instance.new("WeldConstraint")
+	weld.Part0 = auraPart
+	weld.Part1 = parentPart
+	weld.Parent = auraPart
+
+	return auraPart
+end
+
 -- Creates and attaches an aura effect to a character model.
 function AuraVisuals.create(auraName: string, character: Model)
 	-- Find a suitable torso part for both R15 (UpperTorso) and R6 (Torso)
