@@ -5,8 +5,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 
 local PlayerData = require(ReplicatedStorage.PlayerData)
-local AuraManager = require(game.ServerScriptService.AuraManager) -- Require AuraManager explicitly
-local ZoneBarrier = require(game.ServerScriptService.ZoneBarrier) -- New: Require ZoneBarrier
+local AuraManager = require(game.ServerScriptService.AuraManager)
+local ZoneGate = require(game.ServerScriptService.ZoneGate)
 local UpdateLuminEvent = ReplicatedStorage:WaitForChild("UpdateLumin")
 local EquipAuraEvent = ReplicatedStorage:WaitForChild("EquipAura")
 local GetEquippedAuraFunction = ReplicatedStorage:WaitForChild("GetEquippedAura") -- New RemoteFunction
@@ -36,12 +36,14 @@ end)
 36+	PlayerData.save(player)
 37+end)
 38+
--- Initialize Zone Barriers
-local forestBarrierPart = workspace:FindFirstChild("ForestBarrier")
-if forestBarrierPart then
-	ZoneBarrier.new(forestBarrierPart, "Forest Zone")
-	print("Forest Zone barrier initialized.")
+-- Initialize Zone Gates (trigger parts in front of visual walls)
+local forestTrigger = workspace:FindFirstChild("ForestZoneTrigger")
+if forestTrigger and forestTrigger:IsA("BasePart") then
+	-- TODO: adjust target position to your actual Forest Zone spawn point
+	local forestSpawn = Vector3.new(50, 3, -10)
+	ZoneGate.new(forestTrigger, "Forest Zone", forestSpawn)
+	print("Forest Zone gate initialized.")
 else
-	warn("ForestBarrier part not found in Workspace. Zone access not fully functional.")
+	warn("ForestZoneTrigger part not found in Workspace. Zone access not fully functional.")
 end
 
