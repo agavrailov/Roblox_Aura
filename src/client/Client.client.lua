@@ -6,12 +6,14 @@ local Players = game:GetService("Players")
 
 local LuminDisplay = require(script.Parent.UI.LuminDisplay)
 local AuraVisuals = require(script.Parent.AuraVisuals)
-local AuraInventoryGui = require(script.Parent.UI.AuraInventoryGui) -- New module
+local AuraInventoryGui = require(script.Parent.UI.AuraInventoryGui)
+local ZoneMessageGui = require(script.Parent.UI.ZoneMessageGui)
 
 local UpdateLuminEvent = ReplicatedStorage:WaitForChild("UpdateLumin")
 local EquipAuraEvent = ReplicatedStorage:WaitForChild("EquipAura")
-local UpdateAurasEvent = ReplicatedStorage:WaitForChild("UpdateAuras") -- Get from ReplicatedStorage
-local GetEquippedAuraFunction = ReplicatedStorage:WaitForChild("GetEquippedAura") -- New RemoteFunction
+local UpdateAurasEvent = ReplicatedStorage:WaitForChild("UpdateAuras")
+local GetEquippedAuraFunction = ReplicatedStorage:WaitForChild("GetEquippedAura")
+local ZoneMessageEvent = ReplicatedStorage:WaitForChild("ZoneMessage")
 
 print("Aura Collector Simulator Client Script Loaded")
 
@@ -80,6 +82,11 @@ EquipAuraEvent.OnClientEvent:Connect(updateAuraVisual)
 
 -- Listen for owned auras updates from the server
 UpdateAurasEvent.OnClientEvent:Connect(updateAuraInventory)
+
+-- Zone messages from server (e.g., blocked from zone)
+ZoneMessageEvent.OnClientEvent:Connect(function(message: string)
+	ZoneMessageGui.show(message)
+end)
 
 -- Toggle button for Aura Inventory
 local toggleInventoryButton = Instance.new("TextButton")

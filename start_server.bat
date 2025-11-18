@@ -1,2 +1,2 @@
-bin\rojo.exe serve
+C:\Users\Anton\.aftman\bin\rojo.exe serve
 

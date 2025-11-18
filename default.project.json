@@ -5,16 +5,10 @@
     "ServerScriptService": {
       "$path": "src/server",
       "ZoneManager": {
-        "$className": "ModuleScript",
         "$path": "src/server/ZoneManager.lua"
       },
       "ZoneBarrier": {
-        "$className": "ModuleScript",
         "$path": "src/server/ZoneBarrier.lua"
-      },
-      "BarrierCreator": {
-        "$className": "Script",
-        "$path": "src/server/BarrierCreator.server.lua"
       }
     },
     "ReplicatedStorage": {

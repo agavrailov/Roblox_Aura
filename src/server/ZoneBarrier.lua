@@ -9,6 +9,17 @@ local PhysicsService = game:GetService("PhysicsService") -- New: Require Physics
 local ZoneManager = require(game.ServerScriptService.ZoneManager)
 
 local ZoneBarrier = {}
+
+local ZoneMessageEvent: RemoteEvent = (function()
+	local existing = ReplicatedStorage:FindFirstChild("ZoneMessage")
+	if existing and existing:IsA("RemoteEvent") then
+		return existing
+	end
+	local newEvent = Instance.new("RemoteEvent")
+	newEvent.Name = "ZoneMessage"
+	newEvent.Parent = ReplicatedStorage
+	return newEvent
+end)()
 ZoneBarrier.__index = ZoneBarrier
 
 -- Collision Group Names
@@ -80,8 +91,11 @@ function ZoneBarrier:onPlayerTouched(player: Player)
 		self:setPassableForPlayer(player, true)
 	else
 		print(player.Name .. " cannot enter " .. self.targetZoneName .. ". Reason: " .. reason)
-		-- Keep barrier impassable, maybe show a UI message
+		-- Keep barrier impassable and notify player
 		self:setPassableForPlayer(player, false)
+		if reason then
+			ZoneMessageEvent:FireClient(player, reason)
+		end
 	end
 end
 

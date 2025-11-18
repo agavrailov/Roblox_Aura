@@ -9,6 +9,25 @@ local PlayerDataStore = DataStoreService:GetDataStore("AuraCollectorPlayerData")
 
 local PlayerData = {}
 
+12+local MAX_DATASTORE_RETRIES = 3
+13+local RETRY_BACKOFF_SECONDS = 2
+14+
+15+local function retryDataStore(operationName: string, fn)
+16+	local lastError
+17+	for attempt = 1, MAX_DATASTORE_RETRIES do
+18+		local success, result = pcall(fn)
+19+		if success then
+20+			return true, result
+21+		end
+22+		lastError = result
+23+		warn(string.format("[PlayerData] %s failed (attempt %d/%d): %s", operationName, attempt, MAX_DATASTORE_RETRIES, tostring(result)))
+24+		if attempt < MAX_DATASTORE_RETRIES then
+25+			task.wait(RETRY_BACKOFF_SECONDS)
+26+		end
+27+	end
+28+	return false, lastError
+29+end
+30+
 -- Default data for a new player
 local DEFAULT_DATA = {
 	Lumin = 0,
@@ -83,7 +102,7 @@ function PlayerData.getEquippedAura(player: Player): string?
 end
 
 function PlayerData.load(player: Player)
-	local success, data = pcall(function()
+	local success, data = retryDataStore("GetAsync", function()
 		return PlayerDataStore:GetAsync(player.UserId)
 	end)
 
@@ -109,8 +128,9 @@ end
 function PlayerData.save(player: Player)
 	local data = playerDataCache[player.UserId]
 	if data then
-		local success, err = pcall(function()
-			PlayerDataStore:SetAsync(player.UserId, data)
+		local dataCopy = table.clone(data)
+		local success, err = retryDataStore("SetAsync", function()
+			PlayerDataStore:SetAsync(player.UserId, dataCopy)
 		end)
 
 		if success then
@@ -121,9 +141,5 @@ function PlayerData.save(player: Player)
 	end
 	playerDataCache[player.UserId] = nil -- Clear from cache after saving
 end
-
--- Connect to PlayerAdded and PlayerRemoving events
-Players.PlayerAdded:Connect(PlayerData.load)
-Players.PlayerRemoving:Connect(PlayerData.save)
 
 return PlayerData

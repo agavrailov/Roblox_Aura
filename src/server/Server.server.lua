@@ -21,7 +21,7 @@ end
 -- Send initial Lumin and Equipped Aura to player when they join
 Players.PlayerAdded:Connect(function(player)
 	PlayerData.load(player) -- Ensure data is loaded before sending
-	local initialLumin = PlayerData.get(player, "Lumin")
+	local initialLumin = PlayerData.get(player, "Lumin") or 0
 	UpdateLuminEvent:FireClient(player, initialLumin)
 
 	-- Now send the full aura data to the client
@@ -32,6 +32,10 @@ Players.PlayerAdded:Connect(function(player)
 	EquipAuraEvent:FireClient(player, equippedAura)
 end)
 
+35+Players.PlayerRemoving:Connect(function(player)
+36+	PlayerData.save(player)
+37+end)
+38+
 -- Initialize Zone Barriers
 local forestBarrierPart = workspace:FindFirstChild("ForestBarrier")
 if forestBarrierPart then
