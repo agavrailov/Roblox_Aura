@@ -9,25 +9,24 @@ local PlayerDataStore = DataStoreService:GetDataStore("AuraCollectorPlayerData")
 
 local PlayerData = {}
 
-12+local MAX_DATASTORE_RETRIES = 3
-13+local RETRY_BACKOFF_SECONDS = 2
-14+
-15+local function retryDataStore(operationName: string, fn)
-16+	local lastError
-17+	for attempt = 1, MAX_DATASTORE_RETRIES do
-18+		local success, result = pcall(fn)
-19+		if success then
-20+			return true, result
-21+		end
-22+		lastError = result
-23+		warn(string.format("[PlayerData] %s failed (attempt %d/%d): %s", operationName, attempt, MAX_DATASTORE_RETRIES, tostring(result)))
-24+		if attempt < MAX_DATASTORE_RETRIES then
-25+			task.wait(RETRY_BACKOFF_SECONDS)
-26+		end
-27+	end
-28+	return false, lastError
-29+end
-30+
+local MAX_DATASTORE_RETRIES = 3
+local RETRY_BACKOFF_SECONDS = 2
+
+local function retryDataStore(operationName: string, fn)
+	local lastError
+	for attempt = 1, MAX_DATASTORE_RETRIES do
+		local success, result = pcall(fn)
+		if success then
+			return true, result
+		end
+		lastError = result
+		warn(string.format("[PlayerData] %s failed (attempt %d/%d): %s", operationName, attempt, MAX_DATASTORE_RETRIES, tostring(result)))
+		if attempt < MAX_DATASTORE_RETRIES then
+			task.wait(RETRY_BACKOFF_SECONDS)
+		end
+	end
+	return false, lastError
+end
 -- Default data for a new player
 local DEFAULT_DATA = {
 	Lumin = 0,

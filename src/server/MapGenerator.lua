@@ -1,208 +1,146 @@
---!strict
--- MapGenerator.lua
--- Generates a hexagonal maze map.
-
+-- Generates rectangular grid map with zones
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RectGrid = require(ReplicatedStorage.RectGrid)
 local ZoneConfig = require(ReplicatedStorage.ZoneConfig)
-local PhysicsService = game:GetService("PhysicsService")
 
 local MapGenerator = {}
 
-local HEX_SIZE = ZoneConfig.Map.HexagonSize
-local WALL_THICKNESS = ZoneConfig.Map.WallThickness
-local WALL_HEIGHT = ZoneConfig.Map.WallHeight
-local TOTAL_ZONES = ZoneConfig.Map.TotalZones
-
-local HEX_WIDTH = math.sqrt(3) * HEX_SIZE
-local HEX_HEIGHT = 2 * HEX_SIZE
-
-local zones = {}
-local walls = {}
-
--- Collision Groups
-local WALL_GROUP = "ZoneWalls"
-local PLAYER_GROUP = "Players"
-
-local function setupCollisionGroups()
-	-- Register groups if they don't exist
-	local existingGroups = {}
-	for _, group in ipairs(PhysicsService:GetRegisteredCollisionGroups()) do
-		existingGroups[group.name] = true
-	end
-
-	if not existingGroups[WALL_GROUP] then
-		pcall(PhysicsService.RegisterCollisionGroup, PhysicsService, WALL_GROUP)
-	end
-	if not existingGroups[PLAYER_GROUP] then
-		pcall(PhysicsService.RegisterCollisionGroup, PhysicsService, PLAYER_GROUP)
-	end
-
-	-- Set all aura-based collision groups
-	for i = 1, 10 do -- Assuming 10 tiers of auras
-		local groupName = "PlayerAura" .. i
-		if not existingGroups[groupName] then
-			pcall(PhysicsService.RegisterCollisionGroup, PhysicsService, groupName)
-		end
-		-- Players with a certain aura should not collide with walls of the same or lower tier
-		for j = 1, i do
-			local wallGroupName = "WallAura" .. j
-			if not existingGroups[wallGroupName] then
-				pcall(PhysicsService.RegisterCollisionGroup, PhysicsService, wallGroupName)
-			end
-			PhysicsService:CollisionGroupSetCollidable(groupName, wallGroupName, false)
-		end
+-- Assign zone type randomly
+local function AssignZoneType(x, z)
+	local rand = math.random(1, 100)
+	
+	if rand <= 20 then
+		return "Green"
+	elseif rand <= 50 then
+		return "Blue"
+	else
+		return "Red"
 	end
 end
 
-local function getHexCenter(q, r)
-	local x = HEX_SIZE * (math.sqrt(3) * q + math.sqrt(3) / 2 * r)
-	local z = HEX_SIZE * (3 / 2 * r)
-	return Vector3.new(x, 0, z)
-end
-
-local function createHexPlatform(position, zoneId)
-	local hexFolder = Instance.new("Folder")
-	hexFolder.Name = "Zone_" .. zoneId
-	hexFolder.Parent = workspace.GeneratedMap
-
-	for i = 1, 6 do
-		local wedge = Instance.new("WedgePart")
-		wedge.Name = "HexWedge" .. i
-		wedge.Size = Vector3.new(1, HEX_SIZE, HEX_WIDTH / 2)
-		wedge.CFrame = CFrame.new(position) * CFrame.Angles(0, math.rad(60 * i), 0) * CFrame.new(0, 0, HEX_WIDTH / 4)
-		wedge.Anchored = true
-		wedge.Color = Color3.fromHSV(zoneId / TOTAL_ZONES, 0.8, 0.9)
-		wedge.Material = Enum.Material.Grass
-		wedge.TopSurface = Enum.SurfaceType.Smooth
-		wedge.BottomSurface = Enum.SurfaceType.Smooth
-		wedge.Parent = hexFolder
+-- Create barrier walls around zone with 1-2 openings
+local function CreateZoneBarriers(x, z, zoneType, parent)
+	local position = RectGrid.GridToWorld(x, z)
+	local size = RectGrid.ZONE_SIZE
+	local wallHeight = 8
+	local wallThickness = 1
+	
+	-- Determine which sides have openings (1 or 2 random sides)
+	local numOpenings = math.random(1, 2)
+	local sides = {"North", "South", "East", "West"}
+	local openings = {}
+	
+	for i = 1, numOpenings do
+		local idx = math.random(1, #sides)
+		openings[sides[idx]] = true
+		table.remove(sides, idx)
 	end
 	
-	return hexFolder
-end
-
-local function createWall(position, angle, zoneId, requiredAuraTier)
-	local wall = Instance.new("Part")
-	wall.Name = "Wall"
-	wall.Size = Vector3.new(HEX_SIZE, WALL_HEIGHT, WALL_THICKNESS)
-	wall.CFrame = CFrame.new(position) * CFrame.Angles(0, math.rad(angle), 0)
-	wall.Anchored = true
-	wall.Color = Color3.fromRGB(100, 100, 100)
-	wall.Material = Enum.Material.Metal
+	local barriers = {}
 	
-	local wallGroupName = "WallAura" .. requiredAuraTier
-	wall.CollisionGroup = wallGroupName
-	
-	return wall
-end
-
-local function getNeighbors(q, r)
-	local neighbors = {}
-	local directions = {
-		{1, 0}, {0, 1}, {-1, 1},
-		{-1, 0}, {0, -1}, {1, -1}
-	}
-	for _, dir in ipairs(directions) do
-		table.insert(neighbors, {q + dir[1], r + dir[2]})
+	-- North wall
+	if not openings.North then
+		local wall = Instance.new("Part")
+		wall.Size = Vector3.new(size, wallHeight, wallThickness)
+		wall.Position = position + Vector3.new(0, wallHeight/2, -size/2)
+		wall.Anchored = true
+		wall.Color = Color3.fromRGB(100, 100, 100)
+		wall.Transparency = 0.3
+		wall.Name = "Barrier_North"
+		wall.Parent = parent
+		table.insert(barriers, wall)
 	end
-	return neighbors
+	
+	-- South wall
+	if not openings.South then
+		local wall = Instance.new("Part")
+		wall.Size = Vector3.new(size, wallHeight, wallThickness)
+		wall.Position = position + Vector3.new(0, wallHeight/2, size/2)
+		wall.Anchored = true
+		wall.Color = Color3.fromRGB(100, 100, 100)
+		wall.Transparency = 0.3
+		wall.Name = "Barrier_South"
+		wall.Parent = parent
+		table.insert(barriers, wall)
+	end
+	
+	-- East wall
+	if not openings.East then
+		local wall = Instance.new("Part")
+		wall.Size = Vector3.new(wallThickness, wallHeight, size)
+		wall.Position = position + Vector3.new(size/2, wallHeight/2, 0)
+		wall.Anchored = true
+		wall.Color = Color3.fromRGB(100, 100, 100)
+		wall.Transparency = 0.3
+		wall.Name = "Barrier_East"
+		wall.Parent = parent
+		table.insert(barriers, wall)
+	end
+	
+	-- West wall
+	if not openings.West then
+		local wall = Instance.new("Part")
+		wall.Size = Vector3.new(wallThickness, wallHeight, size)
+		wall.Position = position + Vector3.new(-size/2, wallHeight/2, 0)
+		wall.Anchored = true
+		wall.Color = Color3.fromRGB(100, 100, 100)
+		wall.Transparency = 0.3
+		wall.Name = "Barrier_West"
+		wall.Parent = parent
+		table.insert(barriers, wall)
+	end
+	
+	return barriers
 end
 
-function MapGenerator.generateMap()
-	print("Starting map generation...")
-	setupCollisionGroups()
+-- Create visual zone part
+local function CreateZonePart(x, z, zoneType, parent)
+	local position = RectGrid.GridToWorld(x, z)
+	local zoneInfo = ZoneConfig.ZoneTypes[zoneType]
+	
+	local part = Instance.new("Part")
+	part.Size = Vector3.new(RectGrid.ZONE_SIZE, 1, RectGrid.ZONE_SIZE)
+	part.Position = position
+	part.Anchored = true
+	part.Color = zoneInfo.Color
+	part.Material = Enum.Material.SmoothPlastic
+	part.Name = string.format("Zone_%d_%d", x, z)
+	part.Transparency = 0.3
+	part.CanCollide = false
+	part.Parent = parent
+	
+	return part
+end
 
+-- Generate entire map
+function MapGenerator.Generate(parent)
 	local mapFolder = Instance.new("Folder")
-	mapFolder.Name = "GeneratedMap"
-	mapFolder.Parent = workspace
-
-	local grid = {}
-	local visited = {}
-	local stack = {}
-
-	-- 1. Create the grid of zones
-	local zoneId = 1
-	for q = -5, 5 do
-		for r = -5, 5 do
-			if zoneId <= TOTAL_ZONES then
-				grid[q .. "," .. r] = {q = q, r = r, id = zoneId, neighbors = {}}
-				zoneId += 1
-			end
-		end
-	end
-	print("Total zones in grid: " .. zoneId - 1)
-
-	-- 2. Maze generation using Randomized DFS
-	local startNode = grid["0,0"]
-	table.insert(stack, startNode)
-	visited[startNode.id] = true
-
-	while #stack > 0 do
-		local current = stack[#stack]
-		local unvisitedNeighbors = {}
-		
-		for _, neighborCoords in ipairs(getNeighbors(current.q, current.r)) do
-			local key = neighborCoords[1] .. "," .. neighborCoords[2]
-			if grid[key] and not visited[grid[key].id] then
-				table.insert(unvisitedNeighbors, grid[key])
-			end
-		end
-
-		if #unvisitedNeighbors > 0 then
-			local nextNode = unvisitedNeighbors[math.random(1, #unvisitedNeighbors)]
+	mapFolder.Name = "ZoneMap"
+	mapFolder.Parent = parent
+	
+	local zones = {}
+	
+	for x = 0, RectGrid.GRID_WIDTH - 1 do
+		for z = 0, RectGrid.GRID_HEIGHT - 1 do
+			local zoneType = AssignZoneType(x, z)
+			local part = CreateZonePart(x, z, zoneType, mapFolder)
+			local barriers = CreateZoneBarriers(x, z, zoneType, mapFolder)
 			
-			-- Remove wall between current and next
-			print("Connecting zone " .. current.id .. " and zone " .. nextNode.id)
-			table.insert(current.neighbors, nextNode)
-			table.insert(nextNode.neighbors, current)
-			
-			visited[nextNode.id] = true
-			table.insert(stack, nextNode)
-		else
-			table.remove(stack)
+			table.insert(zones, {
+				GridX = x,
+				GridZ = z,
+				Type = zoneType,
+				Part = part,
+				Barriers = barriers,
+				Position = RectGrid.GridToWorld(x, z)
+			})
 		end
 	end
-
-	-- 3. Create the visual representation
-	print("Creating visual representation of the map...")
-	local firstZonePos = nil
-	for key, node in pairs(grid) do
-		local pos = getHexCenter(node.q, node.r)
-		if not firstZonePos then
-			firstZonePos = pos
-		end
-		local hexPlatform = createHexPlatform(pos, node.id)
-		hexPlatform.Parent = mapFolder
-		zones[node.id] = hexPlatform
-
-		local allNeighbors = getNeighbors(node.q, node.r)
-		for i, neighborCoords in ipairs(allNeighbors) do
-			local neighborKey = neighborCoords[1] .. "," .. neighborCoords[2]
-			local isConnected = false
-			for _, connectedNeighbor in ipairs(node.neighbors) do
-				if connectedNeighbor.q == neighborCoords[1] and connectedNeighbor.r == neighborCoords[2] then
-					isConnected = true
-					break
-				end
-			end
-
-			if not isConnected then
-				local angle = 60 * (i - 1) + 30
-				local wallPos = pos + Vector3.new(
-					HEX_WIDTH / 2 * math.cos(math.rad(angle)),
-					WALL_HEIGHT / 2,
-					HEX_WIDTH / 2 * math.sin(math.rad(angle))
-				)
-				
-				-- Assign a required aura tier to the wall (e.g., based on zoneId)
-				local requiredAuraTier = math.ceil(node.id / 10) -- Example: 10 zones per tier
-				local wall = createWall(wallPos, angle, node.id, requiredAuraTier)
-				wall.Parent = mapFolder
-				table.insert(walls, wall)
-			end
-		end
-	end
-	print("Map generation complete. First zone position: " .. tostring(firstZonePos))
+	
+	print(string.format("Generated %d zones (%dx%d grid)", 
+		#zones, RectGrid.GRID_WIDTH, RectGrid.GRID_HEIGHT))
+	
+	return zones, mapFolder
 end
 
 return MapGenerator

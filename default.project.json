@@ -3,16 +3,7 @@
   "tree": {
     "$className": "DataModel",
     "ServerScriptService": {
-      "$path": "src/server",
-      "ZoneManager": {
-        "$path": "src/server/ZoneManager.lua"
-      },
-      "ZoneBarrier": {
-        "$path": "src/server/ZoneBarrier.lua"
-      },
-      "MapGenerator": {
-        "$path": "src/server/MapGenerator.lua"
-      }
+      "$path": "src/server"
     },
     "ReplicatedStorage": {
       "$path": "src/shared",
