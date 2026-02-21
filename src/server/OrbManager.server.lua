@@ -16,8 +16,8 @@ print("OrbManager Server Script Loaded")
 local activeOrbs = {}
 
 -- Function to spawn an orb and add it to our map
-local function spawnOrb(position: Vector3, orbType)
-	local orbObject, orbPart = Orb.new(position, orbType)
+local function spawnOrb(position: Vector3, orbName: string, luminAmount: number, respawnTime: number)
+	local orbObject, orbPart = Orb.new(position, luminAmount, respawnTime) -- Orb module needs to be updated to accept respawnTime
 	activeOrbs[orbPart] = orbObject
 
 	orbPart.Touched:Connect(function(otherPart)
@@ -33,10 +33,7 @@ local function spawnOrb(position: Vector3, orbType)
 			return
 		end
 
-		-- Try to collect the orb (guard against multiple touches)
-		if not orbModule.enabled then
-			return
-		end
+		-- Try to collect the orb
 		local luminAmount = orbModule:collect()
 		if luminAmount then
 			-- If collection was successful, add lumin to the player's data
@@ -48,12 +45,7 @@ local function spawnOrb(position: Vector3, orbType)
 	end)
 end
 
--- Spawn orbs based on ZoneConfig
-for zoneName, zoneData in pairs(ZoneConfig.Zones) do
-	for _, spawnPoint in ipairs(zoneData.SpawnPoints) do
-		for _, orbType in pairs(zoneData.OrbTypes) do
-			spawnOrb(spawnPoint, orbType)
-		end
-	end
-end
+-- Spawn a test orb
+spawnOrb(Vector3.new(0, 5, 0), "TestOrb", 10, 5)
+
 

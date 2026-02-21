@@ -45,6 +45,17 @@ AuraConfig.Auras = {
 		ParticleEffect = "rbxassetid://0", -- Placeholder
 		Description = "An intense red energy.",
 		PreviousAura = "Blue Aura",
+		NextAura = "Purple Aura", -- Unlocks Purple Aura
+	},
+
+	-- Purple Aura
+	["Purple Aura"] = {
+		Name = "Purple Aura",
+		Cost = 10000,
+		LuminMultiplier = 3.0, -- 200% more Lumin
+		ParticleEffect = "rbxassetid://0", -- Placeholder
+		Description = "A mystical purple glow.",
+		PreviousAura = "Red Aura",
 		NextAura = nil, -- Last aura in this chain for now
 	},
 }

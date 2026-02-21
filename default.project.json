@@ -9,6 +9,9 @@
       },
       "ZoneBarrier": {
         "$path": "src/server/ZoneBarrier.lua"
+      },
+      "MapGenerator": {
+        "$path": "src/server/MapGenerator.lua"
       }
     },
     "ReplicatedStorage": {
