@@ -45,12 +45,7 @@ local function spawnOrb(position: Vector3, orbName: string, luminAmount: number,
 	end)
 end
 
--- Spawn orbs based on ZoneConfig
-for zoneName, zoneData in pairs(ZoneConfig.Zones) do
-	for _, spawnPoint in ipairs(zoneData.SpawnPoints) do
-		for _, orbType in pairs(zoneData.OrbTypes) do
-			spawnOrb(spawnPoint, orbType.Name, orbType.LuminValue, orbType.RespawnTime)
-		end
-	end
-end
+-- Spawn a test orb
+spawnOrb(Vector3.new(0, 5, 0), "TestOrb", 10, 5)
+
 

@@ -30,25 +30,25 @@ local function onEquipAura(player: Player, auraName: string?)
 	print("Player " .. player.Name .. " equipped: " .. tostring(auraName))
 end
 
-local function onCraftAura(player: Player, auraName: string)
+function AuraManager.craftAura(player: Player, auraName: string): (boolean, number)
 	print("Player " .. player.Name .. " is attempting to craft '" .. auraName .. "'")
 
 	-- 1. Validate the request
 	local auraData = AuraConfig.Auras[auraName]
 	if not auraData then
 		warn("Player " .. player.Name .. " tried to craft a non-existent aura: " .. auraName)
-		return
+		return false, PlayerData.get(player, "Lumin")
 	end
 
 	if PlayerData.hasAura(player, auraName) then
 		warn("Player " .. player.Name .. " tried to craft an aura they already own: " .. auraName)
-		return
+		return false, PlayerData.get(player, "Lumin")
 	end
 
 	local currentLumin = PlayerData.get(player, "Lumin")
 	if currentLumin < auraData.Cost then
 		warn("Player " .. player.Name .. " does not have enough Lumin to craft " .. auraName)
-		return
+		return false, currentLumin
 	end
 
 	-- 2. Process the request
@@ -58,14 +58,15 @@ local function onCraftAura(player: Player, auraName: string)
 
 	-- 3. Notify the client and log the success
 	local newLumin = PlayerData.get(player, "Lumin")
-	UpdateLuminEvent:FireClient(player, newLumin)
-	EquipAuraEvent:FireClient(player, auraName) -- Notify client to update visual
-	sendAuraDataToClient(player) -- Update inventory UI
+	-- These events are now fired from Server.server.lua after calling AuraManager.craftAura
+	-- UpdateLuminEvent:FireClient(player, newLumin)
+	-- EquipAuraEvent:FireClient(player, auraName) -- Notify client to update visual
+	-- sendAuraDataToClient(player) -- Update inventory UI
 
 	print("Successfully crafted '" .. auraName .. "' for " .. player.Name .. ". New Lumin: " .. tostring(newLumin))
+	return true, newLumin
 end
 
-CraftAuraEvent.OnServerEvent:Connect(onCraftAura)
 EquipAuraEvent.OnServerEvent:Connect(onEquipAura)
 
 AuraManager.sendAuraDataToClient = sendAuraDataToClient -- Make public

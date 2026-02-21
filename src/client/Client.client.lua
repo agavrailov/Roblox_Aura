@@ -7,11 +7,13 @@ local Players = game:GetService("Players")
 local LuminDisplay = require(script.Parent.UI.LuminDisplay)
 local AuraVisuals = require(script.Parent.AuraVisuals)
 local AuraInventoryGui = require(script.Parent.UI.AuraInventoryGui) -- New module
+local CraftingGui = require(script.Parent.UI.CraftingGui) -- New module
 
 local UpdateLuminEvent = ReplicatedStorage:WaitForChild("UpdateLumin")
 local EquipAuraEvent = ReplicatedStorage:WaitForChild("EquipAura")
 local UpdateAurasEvent = ReplicatedStorage:WaitForChild("UpdateAuras") -- Get from ReplicatedStorage
 local GetEquippedAuraFunction = ReplicatedStorage:WaitForChild("GetEquippedAura") -- New RemoteFunction
+local CraftAuraEvent = ReplicatedStorage:WaitForChild("CraftAura") -- New RemoteEvent for crafting
 
 print("Aura Collector Simulator Client Script Loaded")
 
@@ -27,6 +29,10 @@ luminGui.Parent = player.PlayerGui
 -- Create and set up the Aura Inventory UI
 local auraInventoryGui, auraInventoryMainFrame, auraListScrollingFrame, auraInventoryCloseButton = AuraInventoryGui.new()
 auraInventoryGui.Parent = player.PlayerGui
+
+-- Create and set up the Crafting UI
+local craftingGui, craftingMainFrame, craftingListScrollingFrame, craftingCloseButton = CraftingGui.new()
+craftingGui.Parent = player.PlayerGui
 
 -- Function to update the Lumin display
 local function updateLuminDisplay(newAmount: number)
@@ -51,6 +57,13 @@ local function onEquipAuraClicked(auraName: string)
 	auraInventoryMainFrame.Visible = false -- Close UI after equipping
 end
 
+-- Function to handle crafting an aura from the UI
+local function onCraftAuraClicked(auraName: string)
+	CraftAuraEvent:FireServer(auraName)
+	print("Attempting to craft: " .. auraName)
+	-- craftingMainFrame.Visible = false -- Close UI after crafting attempt
+end
+
 -- Function to update the aura inventory display
 local function updateAuraInventory(ownedAuras: {string}, equippedAura: string?)
 	-- Clear existing items
@@ -70,6 +83,26 @@ local function updateAuraInventory(ownedAuras: {string}, equippedAura: string?)
 	-- Adjust CanvasSize
 	local contentHeight = #ownedAuras * (60 + 5) -- 60 is item height, 5 is padding
 	auraListScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, contentHeight)
+end
+
+-- Function to update the crafting list display
+local function updateCraftingList(availableAuras: {{name: string, cost: number}})
+	-- Clear existing items
+	for _, child in ipairs(craftingListScrollingFrame:GetChildren()) do
+		if child:IsA("Frame") then
+			child:Destroy()
+		end
+	end
+
+	-- Add new items
+	for _, auraData in ipairs(availableAuras) do
+		local auraItemFrame, craftButton = CraftingGui.createCraftingItem(auraData.name, auraData.cost, onCraftAuraClicked)
+		auraItemFrame.Parent = craftingListScrollingFrame
+	end
+
+	-- Adjust CanvasSize
+	local contentHeight = #availableAuras * (60 + 5) -- 60 is item height, 5 is padding
+	craftingListScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, contentHeight)
 end
 
 -- Listen for Lumin updates from the server
@@ -98,8 +131,36 @@ toggleInventoryButton.MouseButton1Click:Connect(function()
 	auraInventoryMainFrame.Visible = not auraInventoryMainFrame.Visible
 end)
 
+-- Crafting button
+local craftAuraButton = Instance.new("TextButton")
+craftAuraButton.Name = "CraftAuraButton"
+craftAuraButton.Size = UDim2.new(0.1, 0, 0.05, 0)
+craftAuraButton.Position = UDim2.new(0.2, 0, 0.01, 0) -- To the right of the chat
+craftAuraButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+craftAuraButton.BackgroundTransparency = 0.5
+craftAuraButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+craftAuraButton.Font = Enum.Font.SourceSansBold
+craftAuraButton.TextSize = 18
+craftAuraButton.Text = "Craft Aura"
+craftAuraButton.Parent = luminGui -- Parent to luminGui for convenience
+
+craftAuraButton.MouseButton1Click:Connect(function()
+	craftingMainFrame.Visible = not craftingMainFrame.Visible
+	-- For now, let's just populate with some dummy data
+	local dummyAuras = {
+		{name = "Basic Aura", cost = 100},
+		{name = "Shiny Aura", cost = 500},
+		{name = "Rare Aura", cost = 1000},
+	}
+	updateCraftingList(dummyAuras)
+end)
+
 auraInventoryCloseButton.MouseButton1Click:Connect(function()
 	auraInventoryMainFrame.Visible = false
+end)
+
+craftingCloseButton.MouseButton1Click:Connect(function()
+	craftingMainFrame.Visible = false
 end)
 
 -- Handle character changes (e.g., respawn)

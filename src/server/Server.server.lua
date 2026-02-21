@@ -11,6 +11,7 @@ local MapGenerator = require(game.ServerScriptService.MapGenerator) -- New: Requ
 local UpdateLuminEvent = ReplicatedStorage:WaitForChild("UpdateLumin")
 local EquipAuraEvent = ReplicatedStorage:WaitForChild("EquipAura")
 local GetEquippedAuraFunction = ReplicatedStorage:WaitForChild("GetEquippedAura") -- New RemoteFunction
+local CraftAuraEvent = ReplicatedStorage:WaitForChild("CraftAura") -- New RemoteEvent for crafting
 
 print("Aura Collector Simulator Server Script Loaded")
 
@@ -34,5 +35,29 @@ Players.PlayerAdded:Connect(function(player)
 	-- Also send the initial equipped aura to the client for visual display
 	local equippedAura = PlayerData.getEquippedAura(player)
 	EquipAuraEvent:FireClient(player, equippedAura)
+end)
+
+-- Handle client requests to craft an aura
+CraftAuraEvent.OnServerEvent:Connect(function(player: Player, auraName: string)
+	local success, newLumin = AuraManager.craftAura(player, auraName)
+	if success then
+		UpdateLuminEvent:FireClient(player, newLumin)
+		AuraManager.sendAuraDataToClient(player) -- Send updated owned auras
+		ZoneBarrier.updatePlayerCollisionGroup(player, auraName) -- Update collision group
+	else
+		-- Optionally, send a message to the client that crafting failed (e.g., not enough lumin)
+		warn(player.Name .. " failed to craft " .. auraName)
+	end
+end)
+
+EquipAuraEvent.OnServerEvent:Connect(function(player: Player, auraName: string)
+	-- The actual equipping logic is in AuraManager, but we need to update the collision group here
+	local equippedAura = PlayerData.getEquippedAura(player)
+	if equippedAura ~= auraName then
+		-- This is a request to change aura
+		PlayerData.setEquippedAura(player, auraName)
+		AuraManager.sendAuraDataToClient(player) -- Update client UI
+	end
+	ZoneBarrier.updatePlayerCollisionGroup(player, auraName)
 end)
 
