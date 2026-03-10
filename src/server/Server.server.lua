@@ -1,86 +1,175 @@
 -- Server.server.lua
--- Main server script for Aura Collector Simulator
+-- Main server entry point - orchestrates all game systems
 
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 
-local PlayerData = require(ReplicatedStorage.PlayerData)
-local AuraManager = require(game.ServerScriptService.AuraManager)
-local MapGenerator = require(game.ServerScriptService.MapGenerator)
-local ZoneAccess = require(game.ServerScriptService.ZoneAccess)
-local ZoneBarrier = require(game.ServerScriptService.ZoneBarrier)
-local UpdateLuminEvent = ReplicatedStorage:WaitForChild("UpdateLumin")
-local EquipAuraEvent = ReplicatedStorage:WaitForChild("EquipAura")
-local GetEquippedAuraFunction = ReplicatedStorage:WaitForChild("GetEquippedAura") -- New RemoteFunction
-local CraftAuraEvent = ReplicatedStorage:WaitForChild("CraftAura") -- New RemoteEvent for crafting
+-- Load modules
+local MazeGenerator = require(script.Parent.MazeGenerator)
+local WorldBuilder = require(script.Parent.WorldBuilder)
+local PlayerDataManager = require(script.Parent.PlayerDataManager)
+local OrbManager = require(script.Parent.OrbManager)
+local DoorController = require(script.Parent.DoorController)
+local RelicManager = require(script.Parent.RelicManager)
 
-print("Aura Collector Simulator Server Script Loaded")
+local AuraData = require(game.ReplicatedStorage.AuraData)
 
--- Generate rectangular map
-local zones, mapFolder = MapGenerator.Generate(workspace)
-print("Server: Generated " .. #zones .. " zones")
+-- Remote events
+local CraftAuraEvent = game.ReplicatedStorage.CraftAura
+local EquipAuraEvent = game.ReplicatedStorage.EquipAura
+local SyncPlayerDataEvent = game.ReplicatedStorage.SyncPlayerData
+local GetPlayerDataFunction = game.ReplicatedStorage.GetPlayerData
 
--- Spawn orbs in zones
-task.wait(0.5) -- Give OrbManager time to load
-if _G.OrbManagerSpawnOrbs then
-	_G.OrbManagerSpawnOrbs(zones)
-else
-	warn("OrbManager not loaded yet")
-end
+-- Store maze grid globally for reference
+local mazeGrid = nil
 
--- Setup zone access barriers
-ZoneBarrier.Setup(zones)
+print("[Server] Initializing Aura Maze server...")
 
--- Handle client requests for equipped aura
-GetEquippedAuraFunction.OnServerInvoke = function(player: Player): string?
-	return PlayerData.getEquippedAura(player)
-end
-
--- Send initial Lumin and Equipped Aura to player when they join
-Players.PlayerAdded:Connect(function(player)
-	PlayerData.load(player) -- Ensure data is loaded before sending
-	local initialLumin = PlayerData.get(player, "Lumin")
-	UpdateLuminEvent:FireClient(player, initialLumin)
-
-	-- Now send the full aura data to the client
-	AuraManager.sendAuraDataToClient(player)
-
-	-- Also send the initial equipped aura to the client for visual display
-	local equippedAura = PlayerData.getEquippedAura(player)
-	EquipAuraEvent:FireClient(player, equippedAura)
+-- Generate world
+local function generateWorld()
+	print("[Server] Generating world...")
 	
-	-- Spawn player at accessible perimeter zone
-	local accessibleZones = ZoneAccess.GetAccessiblePerimeterZones(player, zones)
-	if #accessibleZones > 0 then
-		local spawnZone = accessibleZones[math.random(1, #accessibleZones)]
-		local character = player.Character or player.CharacterAdded:Wait()
-		local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-		humanoidRootPart.CFrame = CFrame.new(spawnZone.Position + Vector3.new(0, 10, 0))
-		print("Spawned " .. player.Name .. " at " .. spawnZone.Type .. " zone")
-	else
-		warn("No accessible zones for " .. player.Name)
+	-- Step 1: Generate maze
+	mazeGrid = MazeGenerator.Generate()
+	
+	-- Step 2: Build physical world (zones, floors, walls)
+	WorldBuilder.BuildWorld(mazeGrid)
+	
+	-- Step 3: Generate doors
+	DoorController.GenerateDoors(mazeGrid)
+	
+	-- Step 4: Spawn orbs
+	OrbManager.SpawnAllOrbs(mazeGrid)
+	
+	-- Step 5: Spawn relics
+	RelicManager.SpawnRelics(mazeGrid)
+	
+	-- Step 6: Create spawn location at center hex (0,0) which maps to world (0,0)
+	local spawnLocation = Instance.new("SpawnLocation")
+	spawnLocation.Name = "StartingSpawn"
+	spawnLocation.Position = Vector3.new(0, 3.5, 0)
+	spawnLocation.Size = Vector3.new(6, 1, 6)
+	spawnLocation.Anchored = true
+	spawnLocation.CanCollide = false
+	spawnLocation.Transparency = 1
+	spawnLocation.Duration = 0 -- No respawn delay
+	spawnLocation.Parent = workspace
+	
+	print("[Server] World generation complete")
+end
+
+-- Handle player joining
+Players.PlayerAdded:Connect(function(player)
+	print("[Server] Player joined:", player.Name)
+	
+	-- Load player data (handled by PlayerDataManager)
+	task.wait(1) -- Wait for data to load
+	
+	-- Initialize relic tracking
+	RelicManager.InitializePlayer(player)
+	
+	-- Send initial data to client
+	local playerData = PlayerDataManager.GetData(player)
+	if playerData then
+		print("[Server] Sending player data - Lumens:", playerData.Lumens, "Auras:", playerData.Auras)
+		SyncPlayerDataEvent:FireClient(player, playerData)
 	end
+	
+	-- Spawn player at starting zone
+	player.CharacterAdded:Connect(function(character)
+		task.wait(1) -- Wait longer for world to fully load
+			local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+			if humanoidRootPart then
+				-- Spawn at center hex (0,0)
+				local spawnPos = Vector3.new(0, 5, 0)
+				humanoidRootPart.CFrame = CFrame.new(spawnPos)
+				print("[Server] Spawned", player.Name, "at position", spawnPos)
+				
+				-- Debug: Check if there's a floor below
+				local rayOrigin = spawnPos
+				local rayDirection = Vector3.new(0, -10, 0)
+				local raycastParams = RaycastParams.new()
+				local result = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
+				if result then
+					print("[Server] Floor found below spawn:", result.Instance.Name, "at Y =", result.Position.Y)
+				else
+					warn("[Server] NO FLOOR FOUND BELOW SPAWN POSITION!")
+				end
+			end
+	end)
 end)
 
--- Handle client requests to craft an aura
-CraftAuraEvent.OnServerEvent:Connect(function(player: Player, auraName: string)
-	local success, newLumin = AuraManager.craftAura(player, auraName)
+-- Handle craft aura request
+CraftAuraEvent.OnServerEvent:Connect(function(player, auraName)
+	print("[Server] Craft aura request from", player.Name, ":", auraName)
+	
+	local playerData = PlayerDataManager.GetData(player)
+	if not playerData then
+		warn("[Server] No player data for", player.Name)
+		return
+	end
+	
+	-- Check if aura exists
+	local aura = AuraData.GetAura(auraName)
+	if not aura then
+		warn("[Server] Invalid aura:", auraName)
+		return
+	end
+	
+	-- Check if already owned
+	if playerData.Auras[auraName] then
+		print("[Server] Player already owns", auraName)
+		return
+	end
+	
+	-- Check if player has enough lumens
+	if playerData.Lumens < aura.Cost then
+		print("[Server] Not enough lumens. Has:", playerData.Lumens, "Needs:", aura.Cost)
+		return
+	end
+	
+	-- Craft aura
+	local success, newLumens = PlayerDataManager.SubtractLumens(player, aura.Cost)
 	if success then
-		UpdateLuminEvent:FireClient(player, newLumin)
-		AuraManager.sendAuraDataToClient(player) -- Send updated owned auras
-	else
-		-- Optionally, send a message to the client that crafting failed (e.g., not enough lumin)
-		warn(player.Name .. " failed to craft " .. auraName)
+		PlayerDataManager.GiveAura(player, auraName)
+		PlayerDataManager.SetEquippedAura(player, auraName)
+		
+		print("[Server] Crafted and equipped", auraName, "for", player.Name)
+		
+		-- Send updated data to client
+		local updatedData = PlayerDataManager.GetData(player)
+		SyncPlayerDataEvent:FireClient(player, updatedData)
+		EquipAuraEvent:FireClient(player, auraName)
 	end
 end)
 
-EquipAuraEvent.OnServerEvent:Connect(function(player: Player, auraName: string)
-	-- The actual equipping logic is in AuraManager, but we need to update the collision group here
-	local equippedAura = PlayerData.getEquippedAura(player)
-	if equippedAura ~= auraName then
-		-- This is a request to change aura
-		PlayerData.setEquippedAura(player, auraName)
-		AuraManager.sendAuraDataToClient(player) -- Update client UI
+-- Handle equip aura request
+EquipAuraEvent.OnServerEvent:Connect(function(player, auraName)
+	print("[Server] Equip aura request from", player.Name, ":", auraName)
+	
+	-- Check if player owns the aura
+	if not PlayerDataManager.HasAura(player, auraName) then
+		warn("[Server] Player doesn't own", auraName)
+		return
 	end
+	
+	-- Equip aura
+	PlayerDataManager.SetEquippedAura(player, auraName)
+	
+	print("[Server] Equipped", auraName, "for", player.Name)
+	print("[Server] Verification - GetEquippedAura returns:", PlayerDataManager.GetEquippedAura(player))
+	
+	-- Send updated data to client
+	local updatedData = PlayerDataManager.GetData(player)
+	SyncPlayerDataEvent:FireClient(player, updatedData)
+	EquipAuraEvent:FireClient(player, auraName)
 end)
 
+-- Handle get player data request
+GetPlayerDataFunction.OnServerInvoke = function(player)
+	return PlayerDataManager.GetData(player)
+end
+
+-- Initialize server
+generateWorld()
+
+print("[Server] Aura Maze server ready!")

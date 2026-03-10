@@ -1,5 +1,5 @@
 {
-  "name": "AuraCollectorSimulator",
+  "name": "AuraMaze",
   "tree": {
     "$className": "DataModel",
     "ServerScriptService": {
@@ -7,7 +7,7 @@
     },
     "ReplicatedStorage": {
       "$path": "src/shared",
-      "UpdateLumin": {
+      "CollectOrb": {
         "$className": "RemoteEvent"
       },
       "CraftAura": {
@@ -16,10 +16,16 @@
       "EquipAura": {
         "$className": "RemoteEvent"
       },
-      "UpdateAuras": {
+      "CollectRelic": {
         "$className": "RemoteEvent"
       },
-      "GetEquippedAura": {
+      "TriggerRebirth": {
+        "$className": "RemoteEvent"
+      },
+      "SyncPlayerData": {
+        "$className": "RemoteEvent"
+      },
+      "GetPlayerData": {
         "$className": "RemoteFunction"
       }
     },

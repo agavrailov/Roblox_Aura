@@ -1,179 +1,99 @@
 -- Client.client.lua
--- Main client script for Aura Collector Simulator
+-- Main client entry point - manages UI and client-side logic
 
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
-
-local LuminDisplay = require(script.Parent.UI.LuminDisplay)
-local AuraVisuals = require(script.Parent.AuraVisuals)
-local AuraInventoryGui = require(script.Parent.UI.AuraInventoryGui) -- New module
-local CraftingGui = require(script.Parent.UI.CraftingGui) -- New module
-
-local UpdateLuminEvent = ReplicatedStorage:WaitForChild("UpdateLumin")
-local EquipAuraEvent = ReplicatedStorage:WaitForChild("EquipAura")
-local UpdateAurasEvent = ReplicatedStorage:WaitForChild("UpdateAuras") -- Get from ReplicatedStorage
-local GetEquippedAuraFunction = ReplicatedStorage:WaitForChild("GetEquippedAura") -- New RemoteFunction
-local CraftAuraEvent = ReplicatedStorage:WaitForChild("CraftAura") -- New RemoteEvent for crafting
-
-print("Aura Collector Simulator Client Script Loaded")
-
 local player = Players.LocalPlayer
-local currentAuraEffect = nil -- To keep track of the currently displayed aura effect
 
-print("Client script running for " .. player.Name)
+-- Load UI modules
+local HUDManager = require(script.Parent.HUDManager)
+local CraftingMenu = require(script.Parent.CraftingMenu)
+local RelicTracker = require(script.Parent.RelicTracker)
 
--- Create and set up the Lumin display UI
-local luminGui, luminTextLabel = LuminDisplay.new()
-luminGui.Parent = player.PlayerGui
+-- Remote events
+local SyncPlayerDataEvent = game.ReplicatedStorage.SyncPlayerData
+local EquipAuraEvent = game.ReplicatedStorage.EquipAura
+local CollectRelicEvent = game.ReplicatedStorage.CollectRelic
+local GetPlayerDataFunction = game.ReplicatedStorage.GetPlayerData
 
--- Create and set up the Aura Inventory UI
-local auraInventoryGui, auraInventoryMainFrame, auraListScrollingFrame, auraInventoryCloseButton = AuraInventoryGui.new()
-auraInventoryGui.Parent = player.PlayerGui
+-- Local player data cache
+local localPlayerData = nil
+local localRelicsData = {Blue = false, Green = false, Red = false}
 
--- Create and set up the Crafting UI
-local craftingGui, craftingMainFrame, craftingListScrollingFrame, craftingCloseButton = CraftingGui.new()
-craftingGui.Parent = player.PlayerGui
+print("[Client] Initializing Aura Maze client...")
 
--- Function to update the Lumin display
-local function updateLuminDisplay(newAmount: number)
-	luminTextLabel.Text = "Lumin: " .. newAmount
+-- Create UI
+HUDManager.CreateHUD()
+CraftingMenu.CreateMenu()
+RelicTracker.CreateTracker()
+
+-- Connect craft button to menu
+local craftButton = HUDManager.GetCraftButton()
+if craftButton then
+	craftButton.MouseButton1Click:Connect(function()
+		CraftingMenu.Toggle()
+	end)
 end
 
--- Function to update the visual aura
-local function updateAuraVisual(auraName: string?)
-	if currentAuraEffect then
-		currentAuraEffect:Destroy()
-		currentAuraEffect = nil
-	end
-
-	if auraName and player.Character then
-		currentAuraEffect = AuraVisuals.create(auraName, player.Character)
-	end
-end
-
--- Function to handle equipping an aura from the UI
-local function onEquipAuraClicked(auraName: string)
-	EquipAuraEvent:FireServer(auraName)
-	auraInventoryMainFrame.Visible = false -- Close UI after equipping
-end
-
--- Function to handle crafting an aura from the UI
-local function onCraftAuraClicked(auraName: string)
-	CraftAuraEvent:FireServer(auraName)
-	print("Attempting to craft: " .. auraName)
-	-- craftingMainFrame.Visible = false -- Close UI after crafting attempt
-end
-
--- Function to update the aura inventory display
-local function updateAuraInventory(ownedAuras: {string}, equippedAura: string?)
-	-- Clear existing items
-	for _, child in ipairs(auraListScrollingFrame:GetChildren()) do
-		if child:IsA("Frame") then
-			child:Destroy()
-		end
-	end
-
-	-- Add new items
-	for _, auraName in ipairs(ownedAuras) do
-		local isEquipped = (auraName == equippedAura)
-		local auraItemFrame, equipButton = AuraInventoryGui.createAuraItem(auraName, isEquipped, onEquipAuraClicked)
-		auraItemFrame.Parent = auraListScrollingFrame
-	end
-
-	-- Adjust CanvasSize
-	local contentHeight = #ownedAuras * (60 + 5) -- 60 is item height, 5 is padding
-	auraListScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, contentHeight)
-end
-
--- Function to update the crafting list display
-local function updateCraftingList(availableAuras: {{name: string, cost: number}})
-	-- Clear existing items
-	for _, child in ipairs(craftingListScrollingFrame:GetChildren()) do
-		if child:IsA("Frame") then
-			child:Destroy()
-		end
-	end
-
-	-- Add new items
-	for _, auraData in ipairs(availableAuras) do
-		local auraItemFrame, craftButton = CraftingGui.createCraftingItem(auraData.name, auraData.cost, onCraftAuraClicked)
-		auraItemFrame.Parent = craftingListScrollingFrame
-	end
-
-	-- Adjust CanvasSize
-	local contentHeight = #availableAuras * (60 + 5) -- 60 is item height, 5 is padding
-	craftingListScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, contentHeight)
-end
-
--- Listen for Lumin updates from the server
-UpdateLuminEvent.OnClientEvent:Connect(updateLuminDisplay)
-
--- Listen for equipped aura updates from the server
-EquipAuraEvent.OnClientEvent:Connect(updateAuraVisual)
-
--- Listen for owned auras updates from the server
-UpdateAurasEvent.OnClientEvent:Connect(updateAuraInventory)
-
--- Toggle button for Aura Inventory
-local toggleInventoryButton = Instance.new("TextButton")
-toggleInventoryButton.Name = "ToggleInventoryButton"
-toggleInventoryButton.Size = UDim2.new(0.1, 0, 0.05, 0)
-toggleInventoryButton.Position = UDim2.new(0.89, 0, 0.01, 0) -- Top-right corner
-toggleInventoryButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-toggleInventoryButton.BackgroundTransparency = 0.5
-toggleInventoryButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-toggleInventoryButton.Font = Enum.Font.SourceSansBold
-toggleInventoryButton.TextSize = 18
-toggleInventoryButton.Text = "Auras"
-toggleInventoryButton.Parent = luminGui -- Parent to luminGui for convenience
-
-toggleInventoryButton.MouseButton1Click:Connect(function()
-	auraInventoryMainFrame.Visible = not auraInventoryMainFrame.Visible
+-- Handle player data sync from server
+SyncPlayerDataEvent.OnClientEvent:Connect(function(playerData)
+	print("[Client] Received player data sync")
+	
+	localPlayerData = playerData
+	
+	-- Update UI
+	HUDManager.UpdateLumens(playerData.Lumens)
+	HUDManager.UpdateEquippedAura(playerData.EquippedAura)
+	CraftingMenu.UpdateAuraButtons(playerData)
+	
+	print("[Client] Updated UI - Lumens:", playerData.Lumens, "Equipped:", playerData.EquippedAura or "None")
 end)
 
--- Crafting button
-local craftAuraButton = Instance.new("TextButton")
-craftAuraButton.Name = "CraftAuraButton"
-craftAuraButton.Size = UDim2.new(0.1, 0, 0.05, 0)
-craftAuraButton.Position = UDim2.new(0.2, 0, 0.01, 0) -- To the right of the chat
-craftAuraButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-craftAuraButton.BackgroundTransparency = 0.5
-craftAuraButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-craftAuraButton.Font = Enum.Font.SourceSansBold
-craftAuraButton.TextSize = 18
-craftAuraButton.Text = "Craft Aura"
-craftAuraButton.Parent = luminGui -- Parent to luminGui for convenience
-
-craftAuraButton.MouseButton1Click:Connect(function()
-	craftingMainFrame.Visible = not craftingMainFrame.Visible
-	-- For now, let's just populate with some dummy data
-	local dummyAuras = {
-		{name = "Basic Aura", cost = 100},
-		{name = "Shiny Aura", cost = 500},
-		{name = "Rare Aura", cost = 1000},
-	}
-	updateCraftingList(dummyAuras)
+-- Handle aura equip notification
+EquipAuraEvent.OnClientEvent:Connect(function(auraName)
+	print("[Client] Aura equipped:", auraName)
+	
+	-- Update UI
+	HUDManager.UpdateEquippedAura(auraName)
+	
+	-- Update visual aura effect on character
+	-- TODO: Implement visual aura effects in next phase
 end)
 
-auraInventoryCloseButton.MouseButton1Click:Connect(function()
-	auraInventoryMainFrame.Visible = false
+-- Handle relic collection
+CollectRelicEvent.OnClientEvent:Connect(function(relicType)
+	print("[Client] Collected relic:", relicType)
+	
+	-- Update local cache
+	localRelicsData[relicType] = true
+	
+	-- Update UI
+	RelicTracker.UpdateRelic(relicType, true)
+	
+	-- Check if all collected
+	if localRelicsData.Blue and localRelicsData.Green and localRelicsData.Red then
+		print("[Client] ALL RELICS COLLECTED! Portal should be accessible")
+		-- TODO: Show portal notification
+	end
 end)
 
-craftingCloseButton.MouseButton1Click:Connect(function()
-	craftingMainFrame.Visible = false
+-- Request initial player data on spawn
+player.CharacterAdded:Connect(function(character)
+	task.wait(1) -- Wait for server to be ready
+	
+	print("[Client] Requesting initial player data...")
+	local success, playerData = pcall(function()
+		return GetPlayerDataFunction:InvokeServer()
+	end)
+	
+	if success and playerData then
+		localPlayerData = playerData
+		HUDManager.UpdateLumens(playerData.Lumens)
+		HUDManager.UpdateEquippedAura(playerData.EquippedAura)
+		CraftingMenu.UpdateAuraButtons(playerData)
+		print("[Client] Initial data loaded")
+	else
+		warn("[Client] Failed to get initial player data")
+	end
 end)
 
--- Handle character changes (e.g., respawn)
-local function onCharacterAdded(character)
-	-- Wait a moment for the character to be fully set up
-	task.wait(1)
-	-- Request equipped aura from server and display it
-	local equippedAura = GetEquippedAuraFunction:InvokeServer()
-	updateAuraVisual(equippedAura)
-end
-
-player.CharacterAdded:Connect(onCharacterAdded)
-if player.Character then
-	onCharacterAdded(player.Character)
-end
-
+print("[Client] Aura Maze client ready!")
