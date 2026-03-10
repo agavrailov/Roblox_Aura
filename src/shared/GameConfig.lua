@@ -4,13 +4,13 @@
 local GameConfig = {}
 
 -- Map Settings
-GameConfig.HEX_RADIUS = 6 -- Hex board radius (3*R^2 + 3*R + 1)
-GameConfig.ZONE_SIZE = 40 -- Size of each zone in studs
+GameConfig.HEX_RADIUS = 7 -- Hex board radius (3*R^2 + 3*R + 1)
+GameConfig.ZONE_SIZE = 30 -- Size of each zone in studs
 
 -- Zone Distribution (must sum to 100)
-GameConfig.BLUE_ZONE_PERCENT = 45 -- 45 zones
-GameConfig.GREEN_ZONE_PERCENT = 30 -- 30 zones
-GameConfig.RED_ZONE_PERCENT = 25 -- 25 zones
+GameConfig.BLUE_ZONE_PERCENT = 30 
+GameConfig.GREEN_ZONE_PERCENT = 40
+GameConfig.RED_ZONE_PERCENT = 30
 
 -- Orb Respawn Times (in seconds)
 GameConfig.BLUE_ORB_RESPAWN_MIN = 15

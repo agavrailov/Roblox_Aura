@@ -8,6 +8,7 @@ local player = Players.LocalPlayer
 local HUDManager = require(script.Parent.HUDManager)
 local CraftingMenu = require(script.Parent.CraftingMenu)
 local RelicTracker = require(script.Parent.RelicTracker)
+local AuraEffect = require(script.Parent.AuraEffect)
 
 -- Remote events
 local SyncPlayerDataEvent = game.ReplicatedStorage.SyncPlayerData
@@ -56,7 +57,7 @@ EquipAuraEvent.OnClientEvent:Connect(function(auraName)
 	HUDManager.UpdateEquippedAura(auraName)
 	
 	-- Update visual aura effect on character
-	-- TODO: Implement visual aura effects in next phase
+	AuraEffect.Apply(auraName)
 end)
 
 -- Handle relic collection
@@ -116,6 +117,7 @@ player.CharacterAdded:Connect(function(character)
 		HUDManager.UpdateLumens(playerData.Lumens)
 		HUDManager.UpdateEquippedAura(playerData.EquippedAura)
 		CraftingMenu.UpdateAuraButtons(playerData)
+		AuraEffect.Apply(playerData.EquippedAura)
 		print("[Client] Initial data loaded")
 	else
 		warn("[Client] Failed to get initial player data")
