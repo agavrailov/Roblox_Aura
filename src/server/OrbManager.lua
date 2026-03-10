@@ -115,6 +115,9 @@ function OrbManager.SpawnOrb(zoneCell, parentFolder)
 		if not orbData.Active then return end
 		
 		local character = hit.Parent
+		if not character:FindFirstChildOfClass("Humanoid") then
+			character = character.Parent
+		end
 		local player = game.Players:GetPlayerFromCharacter(character)
 		
 		if player then

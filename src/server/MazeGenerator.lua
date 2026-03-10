@@ -280,6 +280,7 @@ local function addEscapeRoutes(grid)
 						if neighborTier < cellTier then
 							removeWall(grid, cell, i)
 							cell.doorTypes[i] = ZoneTypes.DoorType.ESCAPE
+							neighbor.doorTypes[oppositeDir(i)] = ZoneTypes.DoorType.ESCAPE
 							escapeRoutesAdded = escapeRoutesAdded + 1
 							break
 						end
@@ -312,9 +313,11 @@ local function addAlternatePaths(grid)
 			if cell.walls[dir] then
 				removeWall(grid, cell, dir)
 				cell.doorTypes[dir] = ZoneTypes.DoorType.ALTERNATE
+				neighbor.doorTypes[oppositeDir(dir)] = ZoneTypes.DoorType.ALTERNATE
 				added = added + 1
 			elseif not cell.doorTypes[dir] then
 				cell.doorTypes[dir] = ZoneTypes.DoorType.ALTERNATE
+				neighbor.doorTypes[oppositeDir(dir)] = ZoneTypes.DoorType.ALTERNATE
 				added = added + 1
 			end
 		end

@@ -92,24 +92,21 @@ local function createWall(x1, z1, x2, z2)
 end
 
 -- Wall edge mapping for flat-top hex:
--- Direction 0 (E):  edge between corners 0-1 (right side)
--- Direction 1 (NE): edge between corners 1-2 (upper right)
--- Direction 2 (NW): edge between corners 2-3 (upper left)
--- Direction 3 (W):  edge between corners 3-4 (left side)
--- Direction 4 (SW): edge between corners 4-5 (lower left)
--- Direction 5 (SE): edge between corners 5-0 (lower right)
+-- Each direction's neighbor is at a specific world angle from the cell center.
+-- The separating edge is perpendicular to that angle, between two adjacent corners.
 -- Corner indices: 1=right(0°), 2=upper-right(60°), 3=upper-left(120°), 4=left(180°), 5=lower-left(240°), 6=lower-right(300°)
 local WALL_EDGE = {
-	{1, 6}, -- E:  corners 1 and 6 (0° and 300°)
-	{1, 2}, -- NE: corners 1 and 2 (0° and 60°)
-	{2, 3}, -- NW: corners 2 and 3 (60° and 120°)
-	{3, 4}, -- W:  corners 3 and 4 (120° and 180°)
-	{4, 5}, -- SW: corners 4 and 5 (180° and 240°)
-	{5, 6}, -- SE: corners 5 and 6 (240° and 300°)
+	{1, 2}, -- E:  edge at 30°, between corners at 0° and 60°
+	{1, 6}, -- NE: edge at 330°, between corners at 0° and 300°
+	{5, 6}, -- NW: edge at 270°, between corners at 240° and 300°
+	{4, 5}, -- W:  edge at 210°, between corners at 180° and 240°
+	{3, 4}, -- SW: edge at 150°, between corners at 120° and 180°
+	{2, 3}, -- SE: edge at 90°, between corners at 60° and 120°
 }
 
 -- Create walls for a cell based on its wall configuration
-local function createWallsForCell(cell)
+-- createdEdges: shared set to avoid duplicate wall parts on shared hex edges
+local function createWallsForCell(cell, createdEdges)
 	local walls = {}
 	local cx, cz = hexToWorld(cell.q, cell.r)
 	local corners = hexCorners(cx, cz)
@@ -119,8 +116,15 @@ local function createWallsForCell(cell)
 			local edge = WALL_EDGE[i]
 			local c1 = corners[edge[1]]
 			local c2 = corners[edge[2]]
-			local wall = createWall(c1.x, c1.z, c2.x, c2.z)
-			table.insert(walls, wall)
+			-- Deduplicate shared edges using rounded midpoint as key
+			local mx = math.floor((c1.x + c2.x) * 10 + 0.5)
+			local mz = math.floor((c1.z + c2.z) * 10 + 0.5)
+			local edgeKey = mx .. "," .. mz
+			if not createdEdges[edgeKey] then
+				createdEdges[edgeKey] = true
+				local wall = createWall(c1.x, c1.z, c2.x, c2.z)
+				table.insert(walls, wall)
+			end
 		end
 	end
 
@@ -146,6 +150,7 @@ function WorldBuilder.BuildWorld(mazeGrid)
 
 	local floorCount = 0
 	local wallCount = 0
+	local createdEdges = {} -- track edges to avoid duplicate wall parts
 
 	-- Generate floors and walls for each cell
 	for _, k in ipairs(mazeGrid._cells) do
@@ -157,7 +162,7 @@ function WorldBuilder.BuildWorld(mazeGrid)
 		floorCount = floorCount + 1
 
 		-- Create walls
-		local walls = createWallsForCell(cell)
+		local walls = createWallsForCell(cell, createdEdges)
 		for _, wall in ipairs(walls) do
 			wall.Parent = wallsFolder
 			wallCount = wallCount + 1

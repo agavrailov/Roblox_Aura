@@ -4,8 +4,8 @@
 local GameConfig = {}
 
 -- Map Settings
-GameConfig.HEX_RADIUS = 5 -- Hex board radius (91 cells: 3*R^2 + 3*R + 1)
-GameConfig.ZONE_SIZE = 50 -- Size of each zone in studs
+GameConfig.HEX_RADIUS = 6 -- Hex board radius (3*R^2 + 3*R + 1)
+GameConfig.ZONE_SIZE = 40 -- Size of each zone in studs
 
 -- Zone Distribution (must sum to 100)
 GameConfig.BLUE_ZONE_PERCENT = 45 -- 45 zones
@@ -24,9 +24,9 @@ GameConfig.GREEN_ORB_VALUE = 5
 GameConfig.RED_ORB_VALUE = 10
 
 -- Orb Spawn Frequency (percentage)
-GameConfig.BLUE_ORB_FREQUENCY = 65
+GameConfig.BLUE_ORB_FREQUENCY = 60
 GameConfig.GREEN_ORB_FREQUENCY = 30
-GameConfig.RED_ORB_FREQUENCY = 5
+GameConfig.RED_ORB_FREQUENCY = 10
 
 -- Aura Costs (in Lumens)
 GameConfig.BLUE_AURA_COST = 10

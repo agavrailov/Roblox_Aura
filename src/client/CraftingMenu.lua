@@ -14,6 +14,7 @@ local CraftingMenu = {}
 local menuGui
 local menuFrame
 local isVisible = false
+local auraConnections = {} -- Track click connections per aura to avoid accumulation
 
 -- Create crafting menu
 function CraftingMenu.CreateMenu()
@@ -142,7 +143,7 @@ function CraftingMenu.CreateMenu()
 		craftBtn.Font = Enum.Font.GothamBold
 		craftBtn.Parent = auraFrame
 		
-		craftBtn.MouseButton1Click:Connect(function()
+		auraConnections[auraName] = craftBtn.MouseButton1Click:Connect(function()
 			CraftAuraEvent:FireServer(auraName)
 		end)
 		
@@ -193,13 +194,17 @@ function CraftingMenu.UpdateAuraButtons(playerData)
 		if auraFrame then
 			local craftBtn = auraFrame:FindFirstChild("CraftButton")
 			if craftBtn then
+				-- Disconnect old handler before reconnecting
+				if auraConnections[auraName] then
+					auraConnections[auraName]:Disconnect()
+				end
+				
 				if playerData.Auras[auraName] then
 					-- Already owned - change to equip button
 					craftBtn.Text = "EQUIP"
 					craftBtn.BackgroundColor3 = Color3.fromRGB(50, 100, 150)
 					
-					-- Update click handler
-					craftBtn.MouseButton1Click:Connect(function()
+					auraConnections[auraName] = craftBtn.MouseButton1Click:Connect(function()
 						EquipAuraEvent:FireServer(auraName)
 					end)
 					
@@ -209,9 +214,12 @@ function CraftingMenu.UpdateAuraButtons(playerData)
 						craftBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
 					end
 				else
-					-- Not owned - show craft button
+					-- Not owned - restore craft handler
 					craftBtn.Text = "CRAFT"
 					craftBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 50)
+					auraConnections[auraName] = craftBtn.MouseButton1Click:Connect(function()
+						CraftAuraEvent:FireServer(auraName)
+					end)
 				end
 			end
 		end
