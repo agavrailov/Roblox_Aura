@@ -9,6 +9,7 @@ local WorldBuilder = {}
 
 local WALL_HEIGHT = 10
 local WALL_THICKNESS = 1
+local WALL_BARRIER_HEIGHT = 8 -- invisible extension to prevent jumping over walls
 
 local sqrt3 = math.sqrt(3)
 
@@ -87,6 +88,18 @@ local function createWall(x1, z1, x2, z2)
 	wall.Anchored = true
 	wall.Material = Enum.Material.Concrete
 	wall.Color = Color3.fromRGB(60, 60, 60)
+
+	-- Invisible barrier on top to prevent jumping over
+	local barrier = Instance.new("Part")
+	barrier.Name = "WallBarrier"
+	barrier.Size = Vector3.new(length, WALL_BARRIER_HEIGHT, WALL_THICKNESS)
+	barrier.CFrame = CFrame.new(midX, WALL_HEIGHT + WALL_BARRIER_HEIGHT / 2, midZ) * CFrame.Angles(0, -angle, 0)
+	barrier.Anchored = true
+	barrier.Transparency = 1
+	barrier.CanCollide = true
+	barrier.CanQuery = false
+	barrier.CanTouch = false
+	barrier.Parent = wall
 
 	return wall
 end

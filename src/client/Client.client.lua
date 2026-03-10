@@ -66,8 +66,34 @@ CollectRelicEvent.OnClientEvent:Connect(function(relicType)
 	-- Update local cache
 	localRelicsData[relicType] = true
 	
-	-- Update UI
+	-- Update HUD first (most important)
 	RelicTracker.UpdateRelic(relicType, true)
+	print("[Client] Updated tracker for", relicType)
+	
+	-- Hide the relic in the world for this player (protected so it can't break handler)
+	local ok, err = pcall(function()
+		local relicsFolder = workspace:FindFirstChild("Relics")
+		if not relicsFolder then return end
+		local relicPart = relicsFolder:FindFirstChild(relicType .. "Relic")
+		if not relicPart then return end
+		
+		relicPart.Transparency = 1
+		for _, child in ipairs(relicPart:GetDescendants()) do
+			if child:IsA("BasePart") then
+				child.Transparency = 1
+			elseif child:IsA("ParticleEmitter") then
+				child.Enabled = false
+			elseif child:IsA("PointLight") then
+				child.Enabled = false
+			elseif child:IsA("BillboardGui") then
+				child.Enabled = false
+			end
+		end
+		print("[Client] Hidden relic", relicType, "from world")
+	end)
+	if not ok then
+		warn("[Client] Failed to hide relic:", err)
+	end
 	
 	-- Check if all collected
 	if localRelicsData.Blue and localRelicsData.Green and localRelicsData.Red then

@@ -76,7 +76,7 @@ function RelicTracker.CreateTracker()
 	-- Container frame
 	local container = Instance.new("Frame")
 	container.Name = "Container"
-	container.Size = UDim2.new(0, 280, 0, 100)
+	container.Size = UDim2.new(0, 280, 0, 130)
 	container.Position = UDim2.new(0.5, -140, 0, 10)
 	container.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 	container.BackgroundTransparency = 0.5

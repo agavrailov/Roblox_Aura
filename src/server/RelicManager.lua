@@ -1,6 +1,7 @@
 -- RelicManager.lua
 -- Manages the 3 Prismatic Keys (relics) that players need to collect for Rebirth
 
+local RunService = game:GetService("RunService")
 local GameConfig = require(game.ReplicatedStorage.GameConfig)
 local ZoneTypes = require(game.ReplicatedStorage.ZoneTypes)
 
@@ -101,41 +102,83 @@ end
 
 -- Create a relic visual object
 local function createRelicPart(relicType, position)
+	local color = RelicTypes[relicType].Color
+
 	local relic = Instance.new("Part")
 	relic.Name = relicType .. "Relic"
 	relic.Shape = Enum.PartType.Ball
-	relic.Size = Vector3.new(3, 3, 3)
-	relic.Position = position
+	relic.Size = Vector3.new(5, 5, 5)
+	relic.Position = position + Vector3.new(0, 3, 0) -- raise above ground
 	relic.Anchored = true
 	relic.CanCollide = false
 	relic.Material = Enum.Material.Neon
-	relic.Color = RelicTypes[relicType].Color
+	relic.Color = color
 	relic.Transparency = 0.2
-	
+
+	-- Bobbing animation
+	local TweenService = game:GetService("TweenService")
+	local bobTween = TweenService:Create(
+		relic,
+		TweenInfo.new(1.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
+		{Position = relic.Position + Vector3.new(0, 2, 0)}
+	)
+	bobTween:Play()
+
 	-- Add spinning animation
 	local bodyAngularVelocity = Instance.new("BodyAngularVelocity")
 	bodyAngularVelocity.AngularVelocity = Vector3.new(0, 2, 0)
 	bodyAngularVelocity.MaxTorque = Vector3.new(0, math.huge, 0)
 	bodyAngularVelocity.P = 1000
 	bodyAngularVelocity.Parent = relic
-	
+
 	-- Add particle effect
 	local particle = Instance.new("ParticleEmitter")
-	particle.Color = ColorSequence.new(RelicTypes[relicType].Color)
+	particle.Color = ColorSequence.new(color)
 	particle.Size = NumberSequence.new(1)
 	particle.Lifetime = NumberRange.new(1, 2)
-	particle.Rate = 30
-	particle.Speed = NumberRange.new(3)
+	particle.Rate = 60
+	particle.Speed = NumberRange.new(5)
 	particle.SpreadAngle = Vector2.new(180, 180)
 	particle.Parent = relic
-	
-	-- Add light
+
+	-- Add light (brighter, larger range)
 	local light = Instance.new("PointLight")
-	light.Color = RelicTypes[relicType].Color
-	light.Brightness = 2
-	light.Range = 20
+	light.Color = color
+	light.Brightness = 4
+	light.Range = 40
 	light.Parent = relic
-	
+
+	-- Vertical beam pillar (visible from across the maze)
+	local beam = Instance.new("Part")
+	beam.Name = relicType .. "Beam"
+	beam.Size = Vector3.new(1, 80, 1)
+	beam.Position = relic.Position + Vector3.new(0, 40, 0)
+	beam.Anchored = true
+	beam.CanCollide = false
+	beam.Material = Enum.Material.Neon
+	beam.Color = color
+	beam.Transparency = 0.6
+	beam.Parent = relic
+
+	-- Billboard label (readable from distance)
+	local billboard = Instance.new("BillboardGui")
+	billboard.Name = "Label"
+	billboard.Size = UDim2.new(0, 200, 0, 50)
+	billboard.StudsOffset = Vector3.new(0, 5, 0)
+	billboard.AlwaysOnTop = true
+	billboard.MaxDistance = 150
+	billboard.Parent = relic
+
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(1, 0, 1, 0)
+	label.BackgroundTransparency = 1
+	label.Text = RelicTypes[relicType].Name
+	label.TextColor3 = color
+	label.TextStrokeTransparency = 0.3
+	label.TextScaled = true
+	label.Font = Enum.Font.GothamBold
+	label.Parent = billboard
+
 	return relic
 end
 
@@ -233,22 +276,34 @@ function RelicManager.SpawnRelics(mazeGrid)
 		end
 	end
 	
-	-- Setup touch detection for all relics
-	for _, relic in ipairs(relicsFolder:GetChildren()) do
-		relic.Touched:Connect(function(hit)
-			local character = hit.Parent
-			local player = game.Players:GetPlayerFromCharacter(character)
-			
-			if player then
-				local relicType = relic.Name:match("(%w+)Relic")
-				if relicType then
+	-- Proximity-based collection (more reliable than .Touched for anchored parts)
+	local COLLECT_DISTANCE = 8
+	local collected = {} -- [UserId..relicType] = true
+
+	RunService.Heartbeat:Connect(function()
+		for _, relic in ipairs(relicsFolder:GetChildren()) do
+			local relicType = relic.Name:match("(%w+)Relic")
+			if not relicType then continue end
+
+			for _, player in ipairs(game.Players:GetPlayers()) do
+				local character = player.Character
+				if not character then continue end
+				local rootPart = character:FindFirstChild("HumanoidRootPart")
+				if not rootPart then continue end
+
+				local dKey = player.UserId .. relicType
+				if collected[dKey] then continue end
+
+				local dist = (rootPart.Position - relic.Position).Magnitude
+				if dist <= COLLECT_DISTANCE then
+					collected[dKey] = true
 					RelicManager.CollectRelic(player, relicType)
 				end
 			end
-		end)
-	end
-	
-	print("[RelicManager] All relics spawned with touch detection")
+		end
+	end)
+
+	print("[RelicManager] All relics spawned with proximity detection")
 end
 
 -- Initialize player relic data

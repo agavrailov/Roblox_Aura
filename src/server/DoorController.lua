@@ -9,6 +9,7 @@ local PlayerDataManager = require(script.Parent.PlayerDataManager)
 local DoorController = {}
 
 local activeDoors = {}
+local DOOR_BARRIER_HEIGHT = 8
 
 local sqrt3 = math.sqrt(3)
 
@@ -81,6 +82,18 @@ local function createDoorPart(fromCell, toCell, doorType, requiredAura)
 			door.Color = Color3.fromRGB(200, 200, 200)
 		end
 	end
+
+	-- Invisible barrier on top to prevent jumping over
+	local barrier = Instance.new("Part")
+	barrier.Name = "DoorBarrier"
+	barrier.Size = Vector3.new(doorWidth, DOOR_BARRIER_HEIGHT, 2)
+	barrier.CFrame = CFrame.new(doorX, 10 + DOOR_BARRIER_HEIGHT / 2, doorZ) * CFrame.Angles(0, -perpAngle, 0)
+	barrier.Anchored = true
+	barrier.Transparency = 1
+	barrier.CanCollide = true
+	barrier.CanQuery = false
+	barrier.CanTouch = false
+	barrier.Parent = door
 
 	return door
 end
