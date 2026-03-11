@@ -3,6 +3,10 @@
 
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- Load shared config
+local GameConfig = require(game.ReplicatedStorage:WaitForChild("GameConfig"))
 
 -- Load UI modules
 local HUDManager = require(script.Parent.HUDManager)
@@ -21,6 +25,18 @@ local localPlayerData = nil
 local localRelicsData = {Blue = false, Green = false, Red = false}
 
 print("[Client] Initializing Aura Maze client...")
+
+-- Enforce zoom limit (deferred so it runs after Roblox's own StarterPlayer reset)
+local function applyZoomLimit()
+	local maxZoom = GameConfig.MAX_ZOOM
+	if not maxZoom then
+		warn("[Client] GameConfig.MAX_ZOOM is nil - Rojo sync may be needed. Using fallback 30.")
+		maxZoom = 30
+	end
+	player.CameraMaxZoomDistance = maxZoom
+	print("[Client] CameraMaxZoomDistance set to", player.CameraMaxZoomDistance)
+end
+task.defer(applyZoomLimit)
 
 -- Create UI
 HUDManager.CreateHUD()
@@ -105,6 +121,8 @@ end)
 
 -- Request initial player data on spawn
 player.CharacterAdded:Connect(function(character)
+	-- Re-apply zoom limit after Roblox's internal StarterPlayer reset
+	task.defer(applyZoomLimit)
 	task.wait(1) -- Wait for server to be ready
 	
 	print("[Client] Requesting initial player data...")

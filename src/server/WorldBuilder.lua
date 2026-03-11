@@ -36,30 +36,33 @@ local function hexCorners(cx, cz)
 	return corners
 end
 
--- Create floor for a hex cell using a cylinder (6-sided approximation)
--- Roblox cylinders align along the Y axis when rotated
+-- Create hexagonal floor prism: 1 center block + 4 wedge caps
+-- The center block spans between the two vertical hex edges.
+-- The 4 WedgeParts fill the triangular caps on the left and right vertices.
 local function createFloor(cell)
 	local cx, cz = hexToWorld(cell.q, cell.r)
 	local size = GameConfig.ZONE_SIZE / 2
 
-	local floor = Instance.new("Part")
-	floor.Name = "Floor_" .. cell.q .. "_" .. cell.r
-	-- Use a cylinder part rotated to be flat; approximate hex with slightly smaller circle
-	floor.Shape = Enum.PartType.Cylinder
-	-- Cylinder: Size.X = height (thin), Size.Y = diameter, Size.Z = diameter
-	floor.Size = Vector3.new(1, size * 2 * 0.95, size * 2 * 0.95)
-	floor.CFrame = CFrame.new(cx, 2.5, cz) * CFrame.Angles(0, 0, math.rad(90))
-	floor.Anchored = true
-	floor.Material = Enum.Material.SmoothPlastic
+	local floorModel = Instance.new("Model")
+	floorModel.Name = "Floor_" .. cell.q .. "_" .. cell.r
 
-	-- Color based on zone type
-	floor.Color = ZoneTypes.Colors[cell.zoneType] or Color3.fromRGB(150, 150, 150)
+	local color = ZoneTypes.Colors[cell.zoneType] or Color3.fromRGB(150, 150, 150)
 
-	-- Add zone label
+	-- Center rectangular block (between the two vertical edges of the hex)
+	local center = Instance.new("Part")
+	center.Name = "HexCenter"
+	center.Size = Vector3.new(size, 1, size * sqrt3)
+	center.CFrame = CFrame.new(cx, 2.5, cz)
+	center.Anchored = true
+	center.Material = Enum.Material.SmoothPlastic
+	center.Color = color
+	center.Parent = floorModel
+
+	-- Zone label on center block
 	local surfaceGui = Instance.new("SurfaceGui")
-	surfaceGui.Face = Enum.NormalId.Right
+	surfaceGui.Face = Enum.NormalId.Top
 	surfaceGui.AlwaysOnTop = false
-	surfaceGui.Parent = floor
+	surfaceGui.Parent = center
 
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.new(1, 0, 1, 0)
@@ -71,7 +74,37 @@ local function createFloor(cell)
 	label.Font = Enum.Font.GothamBold
 	label.Parent = surfaceGui
 
-	return floor
+	-- 4 WedgePart caps filling the triangular points on left and right
+	-- Each wedge is a right triangle: legs = size/2 (along X) and size*sqrt3/2 (along Z)
+	local wedgeSize = Vector3.new(1, size * sqrt3 / 2, size / 2)
+	local capDefs = {
+		{ 1,  1}, -- upper-right
+		{ 1, -1}, -- lower-right
+		{-1,  1}, -- upper-left
+		{-1, -1}, -- lower-left
+	}
+	for _, def in ipairs(capDefs) do
+		local xSign, zSign = def[1], def[2]
+		local wedge = Instance.new("WedgePart")
+		wedge.Name = "HexCap"
+		wedge.Size = wedgeSize
+		local pos = Vector3.new(
+			cx + xSign * size * 3 / 4,
+			2.5,
+			cz + zSign * size * sqrt3 / 4
+		)
+		wedge.CFrame = CFrame.fromMatrix(
+			pos,
+			Vector3.new(0, -xSign * zSign, 0),
+			Vector3.new(0, 0, zSign)
+		)
+		wedge.Anchored = true
+		wedge.Material = Enum.Material.SmoothPlastic
+		wedge.Color = color
+		wedge.Parent = floorModel
+	end
+
+	return floorModel
 end
 
 -- Create a wall segment between two world points

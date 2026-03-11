@@ -81,9 +81,17 @@ function CraftingMenu.CreateMenu()
 	auraList.ScrollBarThickness = 8
 	auraList.Parent = menuFrame
 	
-	-- Populate aura list
-	local yOffset = 0
+	-- Populate aura list (sorted by cost, most expensive first)
+	local sortedAuras = {}
 	for auraName, aura in pairs(AuraData.Auras) do
+		table.insert(sortedAuras, { key = auraName, data = aura })
+	end
+	table.sort(sortedAuras, function(a, b) return a.data.Cost > b.data.Cost end)
+	
+	local yOffset = 0
+	for _, entry in ipairs(sortedAuras) do
+		local auraName = entry.key
+		local aura = entry.data
 		local auraFrame = Instance.new("Frame")
 		auraFrame.Name = auraName
 		auraFrame.Size = UDim2.new(1, -10, 0, 100)
